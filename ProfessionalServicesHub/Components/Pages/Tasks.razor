@@ -117,7 +117,7 @@ else
     }
 
     private async Task OnDragStop(
-        DragEventArgs<ActivityBoardItem> args)
+        Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
     {
         var item = args.Data?.FirstOrDefault();
         var previous = args.PreviousCardData?.FirstOrDefault();
