@@ -8,6 +8,11 @@
 <PageHeader Title="Clients"
             Subtitle="Client records and relationship management.">
     <Actions>
+        <SfButton IsPrimary="true"
+                  OnClick="CreateClient">
+            New client
+        </SfButton>
+
         <SfButton Disabled="@(SelectedClient is null)"
                   OnClick="OpenSelectedClient">
             Open
@@ -37,11 +42,11 @@ else
             AllowPaging="true"
             Toolbar="@ToolbarItems">
 
-        <GridSelectionSettings Mode="SelectionMode.Row"
+        <GridSelectionSettings Mode="@Syncfusion.Blazor.Grids.SelectionMode.Row"
                                Type="@Syncfusion.Blazor.Grids.SelectionType.Single" />
 
         <GridPageSettings PageSize="10" />
-        <GridFilterSettings Type="FilterType.Excel" />
+        <GridFilterSettings Type="@Syncfusion.Blazor.Grids.FilterType.Excel" />
 
         <GridEvents RowSelected="OnRowSelected"
                     RowDeselected="OnRowDeselected"
@@ -121,6 +126,11 @@ else
     private void OnRowDeselected(RowDeselectEventArgs<ClientListItem> _)
     {
         SelectedClient = null;
+    }
+
+    private void CreateClient()
+    {
+        Navigation.NavigateTo("/clients/new");
     }
 
     private void OpenSelectedClient()

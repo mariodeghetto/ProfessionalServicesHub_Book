@@ -85,9 +85,11 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 ```
 
 The current Book Edition milestone includes the application shell and the
-first end-to-end business data flow for clients. The Clients page uses a
-Syncfusion DataGrid with sorting, search, filtering, paging, single-row
-selection, and navigation to a client detail route placeholder.
+complete client management flow. The Clients page uses a Syncfusion DataGrid
+for exploration and selection, while a reusable client editor supports
+creation and modification with Syncfusion inputs, Blazor validation,
+database-backed duplicate-code checks, unsaved-change protection, and
+explicit loading and error states.
 
 ## Local database
 
@@ -115,6 +117,17 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 
 In Development, deterministic client seed data is inserted only when the
 Clients table is empty.
+
+## Client form validation
+
+The client editor uses an edit model rather than binding directly to the EF
+Core entity. Immediate field rules are enforced through DataAnnotations and
+the custom business email validator. The email policy used by this sample
+requires an Internet-style public domain, so addresses such as
+`name@sub.example.com` are accepted while `name@example` is rejected.
+
+Client-code uniqueness is enforced by both the application service and the
+database unique index.
 
 ## Package management
 

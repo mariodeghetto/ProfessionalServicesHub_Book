@@ -115,18 +115,21 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 4 milestone, verify that:
+At the Chapter 5 milestone, verify that:
 
-- the application shell remains interactive
-- Dashboard, Clients, Engagements, Tasks, Calendar, and Documents are reachable
-- the Clients page displays 12 deterministic sample clients in Development
-- the DataGrid supports sorting, search, Excel-style filtering, paging, and single-row selection
-- the pager shows 10 rows on the first page and 2 rows on the second page
-- selecting a row enables the Open button
-- Open navigates to `/clients/{id}` using the selected client identifier
-- the client detail placeholder can navigate back to the Clients page
-- restarting the application does not duplicate the Development seed
-- no Syncfusion asset, license, or runtime error appears in the browser console
+- the Clients page still supports sorting, search, filtering, paging, and single-row selection
+- New client opens `/clients/new` with an empty edit model and Active status
+- required Code and Name validation prevents invalid submission
+- the business email policy rejects `name@example` and accepts multi-label domains such as `name@sub.example.com`
+- a duplicate client code is reported without losing the entered form data
+- a valid client can be created and appears in the Clients grid
+- Open navigates to `/clients/{id}` and loads the existing values for editing
+- changes to an existing client are persisted and reflected in the Clients grid
+- an unknown client identifier produces an application message rather than an unhandled exception
+- Save is disabled while a save operation is already in progress
+- leaving a modified form triggers an unsaved-change confirmation
+- confirming Cancel does not submit or persist the modified form
+- no Syncfusion asset, license, Blazor, or EF Core runtime error appears in the browser console or application log
 
 If the local HTTPS development certificate is not trusted, run:
 

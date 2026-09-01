@@ -30,6 +30,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
 builder.Services.AddScoped<ClientQueryService>();
+builder.Services.AddScoped<ClientCommandService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
