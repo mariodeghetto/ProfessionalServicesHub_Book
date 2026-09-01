@@ -1,14 +1,133 @@
 @page "/clients"
+@inject ClientQueryService ClientQueries
+@inject NavigationManager Navigation
+@inject ILogger<Clients> Logger
 
 <PageTitle>Clients - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Clients"
             Subtitle="Client records and relationship management.">
     <Actions>
-        <SfButton IsPrimary="true" Disabled="true">
-            New client
+        <SfButton Disabled="@(SelectedClient is null)"
+                  OnClick="OpenSelectedClient">
+            Open
         </SfButton>
     </Actions>
 </PageHeader>
 
-<p>Client management will be implemented in the next chapter.</p>
+@if (IsLoading)
+{
+    <p role="status">Loading clients...</p>
+}
+else if (!string.IsNullOrWhiteSpace(LoadError))
+{
+    <div role="alert">@LoadError</div>
+}
+else if (Clients.Count == 0)
+{
+    <p>No clients are available.</p>
+}
+else
+{
+    <SfGrid ID="ClientsGrid"
+            DataSource="@Clients"
+            AllowSelection="true"
+            AllowSorting="true"
+            AllowFiltering="true"
+            AllowPaging="true"
+            Toolbar="@ToolbarItems">
+
+        <GridSelectionSettings Mode="SelectionMode.Row"
+                               Type="SelectionType.Single" />
+
+        <GridPageSettings PageSize="10" />
+        <GridFilterSettings Type="FilterType.Excel" />
+
+        <GridEvents RowSelected="OnRowSelected"
+                    RowDeselected="OnRowDeselected"
+                    TValue="ClientListItem" />
+
+        <GridColumns>
+            <GridColumn Field="@nameof(ClientListItem.Code)"
+                        HeaderText="Code"
+                        Width="110" />
+
+            <GridColumn Field="@nameof(ClientListItem.Name)"
+                        HeaderText="Client"
+                        Width="220" />
+
+            <GridColumn Field="@nameof(ClientListItem.City)"
+                        HeaderText="City"
+                        Width="140" />
+
+            <GridColumn Field="@nameof(ClientListItem.Email)"
+                        HeaderText="Email"
+                        Width="220" />
+
+            <GridColumn Field="@nameof(ClientListItem.Status)"
+                        HeaderText="Status"
+                        Width="120" />
+
+            <GridColumn Field="@nameof(ClientListItem.CreatedOn)"
+                        HeaderText="Created"
+                        Type="ColumnType.Date"
+                        Format="d"
+                        TextAlign="TextAlign.Right"
+                        Width="120" />
+        </GridColumns>
+    </SfGrid>
+}
+
+@code {
+    private readonly List<string> ToolbarItems = ["Search"];
+
+    private List<ClientListItem> Clients { get; set; } = [];
+
+    private ClientListItem? SelectedClient { get; set; }
+
+    private bool IsLoading { get; set; }
+
+    private string? LoadError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            LoadError = null;
+            Clients = await ClientQueries.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to load clients.");
+            LoadError = "Unable to load clients. Please try again later.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void OnRowSelected(RowSelectEventArgs<ClientListItem> args)
+    {
+        SelectedClient = args.Data;
+    }
+
+    private void OnRowDeselected(RowDeselectEventArgs<ClientListItem> _)
+    {
+        SelectedClient = null;
+    }
+
+    private void OpenSelectedClient()
+    {
+        if (SelectedClient is not null)
+        {
+            Navigation.NavigateTo($"/clients/{SelectedClient.Id}");
+        }
+    }
+}
