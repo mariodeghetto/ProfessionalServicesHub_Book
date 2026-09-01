@@ -1,0 +1,270 @@
+@page "/clients/new"
+@page "/clients/{Id:int}"
+@inject ClientCommandService ClientCommands
+@inject NavigationManager Navigation
+@inject IJSRuntime JsRuntime
+@inject ILogger<ClientEditor> Logger
+
+<PageTitle>
+    @(IsNew ? "New client" : "Edit client") - Professional Services Hub
+</PageTitle>
+
+<PageHeader Title="@(IsNew ? "New client" : "Edit client")"
+            Subtitle="Client profile and status." />
+
+@if (IsLoading)
+{
+    <p role="status">Loading client...</p>
+}
+else if (ClientNotFound)
+{
+    <div role="alert">
+        The requested client does not exist or is no longer available.
+    </div>
+}
+else if (LoadFailed)
+{
+    <div role="alert">
+        Unable to load the client. Please try again later.
+    </div>
+}
+else if (EditContext is not null)
+{
+    <NavigationLock ConfirmExternalNavigation="@HasUnsavedChanges"
+                    OnBeforeInternalNavigation="ConfirmInternalNavigation" />
+
+    <EditForm EditContext="@EditContext"
+              OnValidSubmit="SaveAsync">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        @if (!string.IsNullOrWhiteSpace(FormError))
+        {
+            <div class="form-error" role="alert">
+                @FormError
+            </div>
+        }
+
+        <div class="form-grid">
+            <div class="form-field">
+                <label for="client-code">Code</label>
+                <SfTextBox ID="client-code"
+                           @bind-Value="Model.Code"
+                           Placeholder="Client code" />
+                <ValidationMessage For="@(() => Model.Code)" />
+            </div>
+
+            <div class="form-field form-field-wide">
+                <label for="client-name">Name</label>
+                <SfTextBox ID="client-name"
+                           @bind-Value="Model.Name"
+                           Placeholder="Client name" />
+                <ValidationMessage For="@(() => Model.Name)" />
+            </div>
+
+            <div class="form-field">
+                <label for="client-city">City</label>
+                <SfTextBox ID="client-city"
+                           @bind-Value="Model.City"
+                           Placeholder="City" />
+                <ValidationMessage For="@(() => Model.City)" />
+            </div>
+
+            <div class="form-field">
+                <label for="client-email">Email</label>
+                <SfTextBox ID="client-email"
+                           Type="InputType.Email"
+                           @bind-Value="Model.Email"
+                           Placeholder="name@example.com" />
+                <ValidationMessage For="@(() => Model.Email)" />
+            </div>
+
+            <div class="form-field">
+                <label for="client-status">Status</label>
+                <SfDropDownList ID="client-status"
+                                TValue="ClientStatus"
+                                TItem="ClientStatusOption"
+                                DataSource="@StatusOptions"
+                                @bind-Value="Model.Status"
+                                Placeholder="Select status">
+                    <DropDownListFieldSettings Value="Value"
+                                               Text="Text" />
+                </SfDropDownList>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <SfButton IsPrimary="true"
+                      Disabled="@IsSaving"
+                      Type="ButtonType.Submit">
+                @(IsSaving ? "Saving..." : "Save")
+            </SfButton>
+
+            <SfButton Disabled="@IsSaving"
+                      Type="ButtonType.Button"
+                      OnClick="Cancel">
+                Cancel
+            </SfButton>
+        </div>
+    </EditForm>
+}
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    private readonly List<ClientStatusOption> StatusOptions =
+    [
+        new(ClientStatus.Prospect, "Prospect"),
+        new(ClientStatus.Active, "Active"),
+        new(ClientStatus.Suspended, "Suspended"),
+        new(ClientStatus.Archived, "Archived")
+    ];
+
+    private ClientEditModel Model { get; set; } = new();
+
+    private EditContext? EditContext { get; set; }
+
+    private bool IsLoading { get; set; }
+
+    private bool IsSaving { get; set; }
+
+    private bool SavedSuccessfully { get; set; }
+
+    private bool ClientNotFound { get; set; }
+
+    private bool LoadFailed { get; set; }
+
+    private string? FormError { get; set; }
+
+    private bool IsNew =>
+        string.Equals(
+            Navigation.ToBaseRelativePath(Navigation.Uri).TrimEnd('/'),
+            "clients/new",
+            StringComparison.OrdinalIgnoreCase);
+
+    private bool HasUnsavedChanges =>
+        EditContext is not null &&
+        !SavedSuccessfully &&
+        EditContext.IsModified();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        IsLoading = true;
+        ClientNotFound = false;
+        LoadFailed = false;
+        FormError = null;
+        SavedSuccessfully = false;
+        EditContext = null;
+
+        try
+        {
+            if (IsNew)
+            {
+                Model = new ClientEditModel();
+            }
+            else if (Id is int clientId)
+            {
+                var loaded =
+                    await ClientCommands.GetForEditAsync(clientId);
+
+                if (loaded is null)
+                {
+                    ClientNotFound = true;
+                    return;
+                }
+
+                Model = loaded;
+            }
+            else
+            {
+                ClientNotFound = true;
+                return;
+            }
+
+            EditContext = new EditContext(Model);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to load client editor for {ClientId}.",
+                Id);
+
+            LoadFailed = true;
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task SaveAsync()
+    {
+        if (IsSaving)
+        {
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            FormError = null;
+
+            var result = await ClientCommands.SaveAsync(Model);
+
+            if (result.Status == SaveClientStatus.DuplicateCode)
+            {
+                FormError = "A client with this code already exists.";
+                return;
+            }
+
+            if (result.Status == SaveClientStatus.NotFound)
+            {
+                FormError =
+                    "The client no longer exists or is not available.";
+                return;
+            }
+
+            SavedSuccessfully = true;
+            Navigation.NavigateTo("/clients");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to save client {ClientId}.",
+                Model.Id);
+
+            FormError =
+                "Unable to save the client. Please try again later.";
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo("/clients");
+    }
+
+    private async Task ConfirmInternalNavigation(
+        LocationChangingContext context)
+    {
+        if (!HasUnsavedChanges)
+        {
+            return;
+        }
+
+        var leave = await JsRuntime.InvokeAsync<bool>(
+            "confirm",
+            "There are unsaved changes. Leave this page anyway?");
+
+        if (!leave)
+        {
+            context.PreventNavigation();
+        }
+    }
+}
