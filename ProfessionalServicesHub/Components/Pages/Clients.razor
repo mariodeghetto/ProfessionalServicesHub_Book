@@ -23,14 +23,14 @@ else if (!string.IsNullOrWhiteSpace(LoadError))
 {
     <div role="alert">@LoadError</div>
 }
-else if (Clients.Count == 0)
+else if (ClientItems.Count == 0)
 {
     <p>No clients are available.</p>
 }
 else
 {
     <SfGrid ID="ClientsGrid"
-            DataSource="@Clients"
+            DataSource="@ClientItems"
             AllowSelection="true"
             AllowSorting="true"
             AllowFiltering="true"
@@ -81,7 +81,7 @@ else
 @code {
     private readonly List<string> ToolbarItems = ["Search"];
 
-    private List<ClientListItem> Clients { get; set; } = [];
+    private List<ClientListItem> ClientItems { get; set; } = [];
 
     private ClientListItem? SelectedClient { get; set; }
 
@@ -100,7 +100,7 @@ else
         {
             IsLoading = true;
             LoadError = null;
-            Clients = await ClientQueries.GetAllAsync();
+            ClientItems = await ClientQueries.GetAllAsync();
         }
         catch (Exception ex)
         {
