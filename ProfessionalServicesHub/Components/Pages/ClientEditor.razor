@@ -96,12 +96,12 @@ else if (EditContext is not null)
         <div class="form-actions">
             <SfButton IsPrimary="true"
                       Disabled="@IsSaving"
-                      Type="ButtonType.Submit">
+                      HtmlAttributes="@SubmitButtonAttributes">
                 @(IsSaving ? "Saving..." : "Save")
             </SfButton>
 
             <SfButton Disabled="@IsSaving"
-                      Type="ButtonType.Button"
+                      HtmlAttributes="@CancelButtonAttributes"
                       OnClick="Cancel">
                 Cancel
             </SfButton>
@@ -120,6 +120,16 @@ else if (EditContext is not null)
         new(ClientStatus.Suspended, "Suspended"),
         new(ClientStatus.Archived, "Archived")
     ];
+
+    private readonly Dictionary<string, object> SubmitButtonAttributes = new()
+    {
+        ["type"] = "submit"
+    };
+
+    private readonly Dictionary<string, object> CancelButtonAttributes = new()
+    {
+        ["type"] = "button"
+    };
 
     private ClientEditModel Model { get; set; } = new();
 
