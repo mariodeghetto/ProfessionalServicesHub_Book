@@ -1,4 +1,7 @@
+using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Clients;
 using ProfessionalServicesHub.Components;
+using ProfessionalServicesHub.Infrastructure.Data;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -16,12 +19,31 @@ if (string.IsNullOrWhiteSpace(syncfusionLicenseKey))
 
 SyncfusionLicenseProvider.RegisterLicense(syncfusionLicenseKey);
 
+var connectionString = builder.Configuration
+    .GetConnectionString("ProfessionalServicesHub")
+    ?? throw new InvalidOperationException(
+        "The ProfessionalServicesHub connection string is not configured.");
+
 builder.Services.AddSyncfusionBlazor();
+
+builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
+    options.UseSqlite(connectionString));
+
+builder.Services.AddScoped<ClientQueryService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    var factory = scope.ServiceProvider
+        .GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+
+    await DevelopmentDataSeeder.SeedAsync(factory);
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())

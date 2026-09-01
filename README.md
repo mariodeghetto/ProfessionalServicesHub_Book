@@ -71,6 +71,7 @@ See `SETUP.md` for complete setup instructions.
 From the repository root:
 
 ```text
+dotnet tool restore
 dotnet restore ProfessionalServicesHub_Book.slnx
 dotnet build ProfessionalServicesHub_Book.slnx
 ```
@@ -83,9 +84,10 @@ Use the HTTPS launch profile for local development:
 dotnet run --launch-profile https --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
-The current Book Edition milestone includes the application shell, responsive
-Syncfusion Sidebar navigation, stable business routes, and reusable page
-headers.
+The current Book Edition milestone includes the application shell and the
+first end-to-end business data flow for clients. The Clients page uses a
+Syncfusion DataGrid with sorting, search, filtering, paging, single-row
+selection, and navigation to a client detail route placeholder.
 
 ## Local database
 
@@ -97,9 +99,22 @@ The configured path is:
 ProfessionalServicesHub/Data/professionalserviceshub.db
 ```
 
-Runtime database files are excluded from Git.
+Runtime database files are excluded from Git. The EF Core migration files are
+versioned in:
 
-The database schema is introduced in later chapters of the book.
+```text
+ProfessionalServicesHub/Infrastructure/Data/Migrations
+```
+
+Apply the current schema from the repository root:
+
+```text
+dotnet tool restore
+dotnet ef database update --project ProfessionalServicesHub/ProfessionalServicesHub.csproj --startup-project ProfessionalServicesHub/ProfessionalServicesHub.csproj
+```
+
+In Development, deterministic client seed data is inserted only when the
+Clients table is empty.
 
 ## Package management
 

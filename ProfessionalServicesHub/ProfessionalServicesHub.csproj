@@ -14,6 +14,7 @@
     </PackageReference>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <PackageReference Include="Syncfusion.Blazor.Buttons" />
+    <PackageReference Include="Syncfusion.Blazor.Grid" />
     <PackageReference Include="Syncfusion.Blazor.Navigations" />
     <PackageReference Include="Syncfusion.Blazor.Themes" />
   </ItemGroup>
