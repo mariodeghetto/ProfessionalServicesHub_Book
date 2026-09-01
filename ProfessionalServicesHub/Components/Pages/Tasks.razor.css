@@ -1,0 +1,43 @@
+.board-message {
+    margin-bottom: 1rem;
+}
+
+.work-card {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.work-card-head,
+.work-card-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.work-card-head {
+    align-items: flex-start;
+}
+
+.work-card-footer {
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+}
+
+.work-card-context {
+    font-size: 0.85rem;
+    opacity: 0.75;
+}
+
+.work-card-description {
+    overflow-wrap: anywhere;
+}
+
+.work-card-overdue {
+    border-left: 0.25rem solid currentColor;
+    padding-left: 0.5rem;
+}
+
+.priority-tag {
+    white-space: nowrap;
+    font-size: 0.8rem;
+}
