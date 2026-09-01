@@ -18,7 +18,7 @@ public sealed class ClientEditModel
     [StringLength(100, ErrorMessage = "City can contain at most 100 characters.")]
     public string? City { get; set; }
 
-    [EmailAddress(ErrorMessage = "Enter a valid email address.")]
+    [BusinessEmailAddress]
     [StringLength(254, ErrorMessage = "Email can contain at most 254 characters.")]
     public string? Email { get; set; }
 
