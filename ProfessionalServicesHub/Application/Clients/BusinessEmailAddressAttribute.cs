@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Globalization;
 
 namespace ProfessionalServicesHub.Application.Clients;
 
@@ -6,6 +7,7 @@ namespace ProfessionalServicesHub.Application.Clients;
 public sealed class BusinessEmailAddressAttribute : ValidationAttribute
 {
     private static readonly EmailAddressAttribute EmailAddressValidator = new();
+    private static readonly IdnMapping IdnMapping = new();
 
     public BusinessEmailAddressAttribute()
     {
@@ -39,9 +41,56 @@ public sealed class BusinessEmailAddressAttribute : ValidationAttribute
         }
 
         var domain = email[(atIndex + 1)..];
-        var lastDotIndex = domain.LastIndexOf('.');
 
-        return lastDotIndex > 0 &&
-               lastDotIndex < domain.Length - 2;
+        return HasValidPublicDomain(domain);
+    }
+
+    private static bool HasValidPublicDomain(string domain)
+    {
+        string asciiDomain;
+
+        try
+        {
+            asciiDomain = IdnMapping.GetAscii(domain);
+        }
+        catch (ArgumentException)
+        {
+            return false;
+        }
+
+        if (asciiDomain.Length > 253)
+        {
+            return false;
+        }
+
+        var labels = asciiDomain.Split('.');
+
+        if (labels.Length < 2)
+        {
+            return false;
+        }
+
+        foreach (var label in labels)
+        {
+            if (label.Length is < 1 or > 63)
+            {
+                return false;
+            }
+
+            if (!char.IsLetterOrDigit(label[0]) ||
+                !char.IsLetterOrDigit(label[^1]))
+            {
+                return false;
+            }
+
+            if (label.Any(character =>
+                    !char.IsLetterOrDigit(character) &&
+                    character != '-'))
+            {
+                return false;
+            }
+        }
+
+        return labels[^1].Length >= 2;
     }
 }
