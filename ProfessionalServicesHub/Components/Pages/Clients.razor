@@ -42,11 +42,11 @@ else
             AllowPaging="true"
             Toolbar="@ToolbarItems">
 
-        <GridSelectionSettings Mode="SelectionMode.Row"
+        <GridSelectionSettings Mode="@Syncfusion.Blazor.Grids.SelectionMode.Row"
                                Type="@Syncfusion.Blazor.Grids.SelectionType.Single" />
 
         <GridPageSettings PageSize="10" />
-        <GridFilterSettings Type="FilterType.Excel" />
+        <GridFilterSettings Type="@Syncfusion.Blazor.Grids.FilterType.Excel" />
 
         <GridEvents RowSelected="OnRowSelected"
                     RowDeselected="OnRowDeselected"
