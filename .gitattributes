@@ -1,0 +1,17 @@
+# Normalize text files to LF across development environments.
+* text=auto eol=lf
+
+# Keep Windows command scripts in CRLF form.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Treat common binary assets as binary.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.dll binary
+*.exe binary
