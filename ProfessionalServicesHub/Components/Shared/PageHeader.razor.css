@@ -1,0 +1,29 @@
+.page-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.page-header-text h1 {
+    margin: 0;
+}
+
+.page-header-text p {
+    margin: 0.35rem 0 0;
+    color: var(--bs-secondary-color);
+}
+
+.page-header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 720px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}

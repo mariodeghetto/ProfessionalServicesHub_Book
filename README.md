@@ -77,12 +77,15 @@ dotnet build ProfessionalServicesHub_Book.slnx
 
 ## Run
 
+Use the HTTPS launch profile for local development:
+
 ```text
-dotnet run --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
+dotnet run --launch-profile https --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
-The home page contains a small Syncfusion button used as the initial
-integration smoke test.
+The current Book Edition milestone includes the application shell, responsive
+Syncfusion Sidebar navigation, stable business routes, and reusable page
+headers.
 
 ## Local database
 

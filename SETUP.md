@@ -88,19 +88,30 @@ The build must complete without errors before proceeding.
 
 ## 6. Run the application
 
+Use the HTTPS launch profile:
+
 ```text
-dotnet run --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
+dotnet run --launch-profile https --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-The home page should display:
+At the Chapter 3 milestone, verify that:
 
-- the Professional Services Hub heading
-- the application environment message
-- a Fluent 2 styled `Syncfusion ready` button
+- the application shell is displayed
+- the Syncfusion Sidebar opens and closes correctly
+- Dashboard, Clients, Engagements, Tasks, Calendar, and Documents are reachable
+- the active navigation item follows the current route
+- the shell remains usable at smaller viewport widths
+- no Syncfusion asset or license warning appears in the browser console
 
-There should be no missing Syncfusion static assets and no license warning.
+If the local HTTPS development certificate is not trusted, run:
+
+```text
+dotnet dev-certs https --trust
+```
+
+and then start the application again.
 
 ## 7. Development database
 
