@@ -66,13 +66,15 @@ public sealed class ClientCommandService(
         }
         else
         {
-            client = await db.Clients
+            var existingClient = await db.Clients
                 .SingleOrDefaultAsync(x => x.Id == model.Id.Value);
 
-            if (client is null)
+            if (existingClient is null)
             {
                 return new SaveClientResult(SaveClientStatus.NotFound);
             }
+
+            client = existingClient;
         }
 
         client.Code = normalizedCode;
