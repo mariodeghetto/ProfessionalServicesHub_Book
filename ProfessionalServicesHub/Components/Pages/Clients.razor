@@ -8,6 +8,11 @@
 <PageHeader Title="Clients"
             Subtitle="Client records and relationship management.">
     <Actions>
+        <SfButton IsPrimary="true"
+                  OnClick="CreateClient">
+            New client
+        </SfButton>
+
         <SfButton Disabled="@(SelectedClient is null)"
                   OnClick="OpenSelectedClient">
             Open
@@ -121,6 +126,11 @@ else
     private void OnRowDeselected(RowDeselectEventArgs<ClientListItem> _)
     {
         SelectedClient = null;
+    }
+
+    private void CreateClient()
+    {
+        Navigation.NavigateTo("/clients/new");
     }
 
     private void OpenSelectedClient()
