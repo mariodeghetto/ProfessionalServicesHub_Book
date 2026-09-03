@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Domain.Calendar;
 using ProfessionalServicesHub.Domain.Clients;
+using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Domain.Work;
 
 namespace ProfessionalServicesHub.Infrastructure.Data;
@@ -15,6 +16,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<WorkActivity> WorkActivities => Set<WorkActivity>();
 
     public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
+
+    public DbSet<BusinessDocument> Documents => Set<BusinessDocument>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -114,5 +117,51 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             .WithMany()
             .HasForeignKey(x => x.WorkActivityId)
             .OnDelete(DeleteBehavior.SetNull);
+        var document = modelBuilder.Entity<BusinessDocument>();
+
+        document.Property(x => x.OriginalFileName)
+            .HasMaxLength(260)
+            .IsRequired();
+
+        document.Property(x => x.StorageKey)
+            .HasMaxLength(160)
+            .IsRequired();
+
+        document.Property(x => x.ContentType)
+            .HasMaxLength(120)
+            .IsRequired();
+
+        document.Property(x => x.Sha256)
+            .HasMaxLength(64)
+            .IsRequired();
+
+        document.Property(x => x.Description)
+            .HasMaxLength(1000);
+
+        document.Property(x => x.UploadedBy)
+            .HasMaxLength(120);
+
+        document.HasIndex(x => x.StorageKey)
+            .IsUnique();
+
+        document.HasIndex(x => x.Sha256);
+        document.HasIndex(x => x.EngagementId);
+        document.HasIndex(x => x.UploadedAtUtc);
+
+        document.HasOne(x => x.Client)
+            .WithMany()
+            .HasForeignKey(x => x.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        document.HasOne(x => x.Engagement)
+            .WithMany()
+            .HasForeignKey(x => x.EngagementId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        document.HasOne(x => x.WorkActivity)
+            .WithMany()
+            .HasForeignKey(x => x.WorkActivityId)
+            .OnDelete(DeleteBehavior.SetNull);
+
     }
 }

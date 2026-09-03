@@ -1,0 +1,121 @@
+.document-status-banner {
+    position: sticky;
+    top: 0.75rem;
+    z-index: 50;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    margin: 0 0 1rem;
+    padding: 0.9rem 1rem;
+    border: 2px solid;
+    border-radius: 0.6rem;
+    box-shadow: 0 0.35rem 1rem rgba(0, 0, 0, 0.16);
+    background: #fff;
+}
+
+.document-status-banner strong {
+    flex: 0 0 auto;
+}
+
+.document-status-error {
+    border-color: #b42318;
+    background: #fff4f2;
+    color: #7a271a;
+}
+
+.document-status-success {
+    border-color: #067647;
+    background: #ecfdf3;
+    color: #05603a;
+}
+
+.document-status-info {
+    border-color: #175cd3;
+    background: #eff8ff;
+    color: #1849a9;
+}
+
+.document-workspace {
+    display: grid;
+    gap: 1.25rem;
+}
+
+.document-panel {
+    display: grid;
+    gap: 1rem;
+    padding: 1.1rem;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: 0.6rem;
+    background: #fff;
+}
+
+.document-panel h2 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.section-help,
+.upload-rules,
+.preview-message {
+    margin: 0.35rem 0 0;
+    color: #5f6368;
+}
+
+.document-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.document-panel label {
+    display: grid;
+    gap: 0.4rem;
+    font-weight: 600;
+}
+
+.repository-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.filter-field {
+    min-width: min(28rem, 100%);
+}
+
+.document-message {
+    padding: 0.75rem 0.9rem;
+    border-left: 0.25rem solid currentColor;
+    background: rgba(0, 0, 0, 0.035);
+}
+
+.document-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.document-actions > div {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.pdf-viewer-host {
+    min-height: 650px;
+}
+
+@media (max-width: 760px) {
+    .document-form-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .repository-heading,
+    .document-actions {
+        align-items: stretch;
+        flex-direction: column;
+    }
+}
