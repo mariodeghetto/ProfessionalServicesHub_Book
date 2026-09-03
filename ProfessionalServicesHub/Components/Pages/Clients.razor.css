@@ -32,6 +32,11 @@
     width: 100%;
 }
 
+.client-lookup-error {
+    margin-top: 0.75rem;
+    color: var(--bs-danger-text-emphasis);
+}
+
 @media (max-width: 760px) {
     .client-lookup-panel {
         align-items: stretch;
