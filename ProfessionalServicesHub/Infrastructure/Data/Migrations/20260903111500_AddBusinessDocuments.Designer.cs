@@ -126,7 +126,7 @@ namespace ProfessionalServicesHub.Infrastructure.Data.Migrations
                         .HasMaxLength(160)
                         .HasColumnType("TEXT");
 
-                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                    b.Property<DateTime>("UploadedAtUtc")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("UploadedBy")
