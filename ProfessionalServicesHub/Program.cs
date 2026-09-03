@@ -5,9 +5,11 @@ using ProfessionalServicesHub.Application.Documents;
 using ProfessionalServicesHub.Application.Dashboard;
 using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
+using ProfessionalServicesHub.Components.Services;
 using ProfessionalServicesHub.Infrastructure.Data;
 using ProfessionalServicesHub.Infrastructure.Documents;
 using Syncfusion.Blazor;
+using Syncfusion.Blazor.Popups;
 using Syncfusion.Licensing;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,11 +44,14 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
+builder.Services.AddScoped<ClientLookupService>();
 builder.Services.AddScoped<ActivityBoardService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddSingleton<IDocumentStorage, LocalDocumentStorage>();
 builder.Services.AddScoped<DocumentService>();
 builder.Services.AddScoped<DashboardService>();
+builder.Services.AddScoped<UiNotificationService>();
+builder.Services.AddScoped<SfDialogService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
