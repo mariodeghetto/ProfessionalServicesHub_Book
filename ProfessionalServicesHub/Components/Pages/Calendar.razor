@@ -61,20 +61,31 @@
                     : "Appointment";
             }
 
-            <div class="schedule-entry">
-                <strong>@item.Subject</strong>
-                <span>@kindText</span>
+            @if (item.IsAllDay)
+            {
+                <div class="schedule-entry schedule-entry-all-day">
+                    <strong>@item.Subject</strong>
+                    <span aria-hidden="true">·</span>
+                    <span>@kindText</span>
+                </div>
+            }
+            else
+            {
+                <div class="schedule-entry">
+                    <strong>@item.Subject</strong>
+                    <span>@kindText</span>
 
-                @if (!string.IsNullOrWhiteSpace(item.ClientName))
-                {
-                    <small>@item.ClientName</small>
-                }
+                    @if (!string.IsNullOrWhiteSpace(item.ClientName))
+                    {
+                        <small>@item.ClientName</small>
+                    }
 
-                @if (!string.IsNullOrWhiteSpace(item.EngagementCode))
-                {
-                    <small>@item.EngagementCode</small>
-                }
-            </div>
+                    @if (!string.IsNullOrWhiteSpace(item.EngagementCode))
+                    {
+                        <small>@item.EngagementCode</small>
+                    }
+                </div>
+            }
         </Template>
     </ScheduleEventSettings>
 
