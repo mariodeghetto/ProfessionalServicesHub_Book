@@ -15,6 +15,13 @@
     </Actions>
 </PageHeader>
 
+@if (LastRefreshedAt is DateTime lastRefreshedAt)
+{
+    <p class="dashboard-refresh-note" role="status">
+        Last refreshed at @lastRefreshedAt.ToString("HH:mm:ss").
+    </p>
+}
+
 @if (IsLoading && Snapshot is null)
 {
     <div class="dashboard-state" role="status">
@@ -187,6 +194,7 @@ else if (Snapshot is not null)
     private DashboardSnapshot? Snapshot { get; set; }
     private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
+    private DateTime? LastRefreshedAt { get; set; }
 
     protected override Task OnInitializedAsync() =>
         LoadDashboardAsync();
@@ -209,6 +217,8 @@ else if (Snapshot is not null)
             Snapshot = await DashboardService.LoadAsync(
                 DateTime.Now,
                 DateTime.UtcNow);
+
+            LastRefreshedAt = DateTime.Now;
         }
         catch (Exception ex)
         {
