@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using ProfessionalServicesHub.Application.Calendar;
 using ProfessionalServicesHub.Application.Clients;
 using ProfessionalServicesHub.Application.Documents;
@@ -119,12 +118,6 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 var app = builder.Build();
-
-if (app.Environment.IsEnvironment("Testing"))
-{
-    app.Lifetime.ApplicationStopped.Register(
-        SqliteConnection.ClearAllPools);
-}
 
 if (app.Environment.IsDevelopment())
 {
