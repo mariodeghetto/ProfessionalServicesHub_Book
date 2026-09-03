@@ -1,5 +1,6 @@
 @page "/documents"
 @inject DocumentService DocumentService
+@inject UiNotificationService Notifications
 @inject ILogger<Documents> Logger
 
 <PageTitle>Documents - Professional Services Hub</PageTitle>
@@ -150,11 +151,16 @@
                        href="@($"/documents/{SelectedDocument.Id}/download")">
                         Download
                     </a>
-                    <button class="btn btn-outline-secondary"
-                            type="button"
-                            @onclick="ArchiveSelectedAsync">
-                        Archive
-                    </button>
+                    <SfTooltip Target="#archive-document-button"
+                               Content="Archive the document without deleting the stored file.">
+                        <button id="archive-document-button"
+                                class="btn btn-outline-secondary"
+                                type="button"
+                                aria-label="Archive document"
+                                @onclick="ArchiveSelectedAsync">
+                            Archive
+                        </button>
+                    </SfTooltip>
                 </div>
             </div>
         }
@@ -335,10 +341,14 @@
                     SelectedCategory,
                     Description);
 
-                SetStatus(
-                    $"{entry.FileInfo.Name} uploaded successfully.",
-                    "success");
+                StatusMessage = null;
                 Description = null;
+
+                await Notifications.PublishAsync(
+                    new UiNotification(
+                        "Document uploaded",
+                        $"{entry.FileInfo.Name} was added to the repository.",
+                        UiNotificationKind.Success));
             }
             catch (InvalidOperationException ex)
             {
@@ -436,11 +446,22 @@
             var archived =
                 await DocumentService.ArchiveAsync(documentId);
 
-            SetStatus(
-                archived
-                    ? $"{fileName} archived."
-                    : "The document is no longer available.",
-                archived ? "success" : "error");
+            if (archived)
+            {
+                StatusMessage = null;
+
+                await Notifications.PublishAsync(
+                    new UiNotification(
+                        "Document archived",
+                        $"{fileName} was removed from active views.",
+                        UiNotificationKind.Information));
+            }
+            else
+            {
+                SetStatus(
+                    "The document is no longer available.",
+                    "error");
+            }
 
             SelectedDocument = null;
             PreviewMessage =
