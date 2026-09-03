@@ -20,11 +20,13 @@ public sealed class EndpointIntegrationTests
 
                 var live =
                     await client.GetAsync(
-                        "/health/live");
+                        "/health/live",
+                        TestContext.Current.CancellationToken);
 
                 var ready =
                     await client.GetAsync(
-                        "/health/ready");
+                        "/health/ready",
+                        TestContext.Current.CancellationToken);
 
                 Assert.Equal(
                     HttpStatusCode.OK,
@@ -60,7 +62,8 @@ public sealed class EndpointIntegrationTests
 
                 var response =
                     await client.GetAsync(
-                        "/documents/42/download");
+                        "/documents/42/download",
+                        TestContext.Current.CancellationToken);
 
                 Assert.Equal(
                     HttpStatusCode.Redirect,
