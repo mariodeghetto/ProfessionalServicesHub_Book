@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Tests.Integration;
@@ -10,12 +9,17 @@ namespace ProfessionalServicesHub.Tests.Integration;
 public sealed class TestWebApplicationFactory
     : WebApplicationFactory<Program>
 {
+    private const string ConnectionStringEnvironmentKey =
+        "ConnectionStrings__ProfessionalServicesHub";
+
     private readonly string _databasePath =
         Path.Combine(
             Path.GetTempPath(),
             $"psh-web-{Guid.NewGuid():N}.db");
 
     private readonly string _connectionString;
+
+    private readonly string? _previousConnectionString;
 
     public TestWebApplicationFactory()
     {
@@ -26,6 +30,14 @@ public sealed class TestWebApplicationFactory
                 Pooling = false
             }
             .ToString();
+
+        _previousConnectionString =
+            Environment.GetEnvironmentVariable(
+                ConnectionStringEnvironmentKey);
+
+        Environment.SetEnvironmentVariable(
+            ConnectionStringEnvironmentKey,
+            _connectionString);
 
         var options =
             new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -42,17 +54,23 @@ public sealed class TestWebApplicationFactory
         IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
+    }
 
-        builder.ConfigureAppConfiguration(
-            (_, configuration) =>
+    protected override void Dispose(bool disposing)
+    {
+        try
+        {
+            base.Dispose(disposing);
+        }
+        finally
+        {
+            if (disposing)
             {
-                configuration.AddInMemoryCollection(
-                    new Dictionary<string, string?>
-                    {
-                        ["ConnectionStrings:ProfessionalServicesHub"] =
-                            _connectionString
-                    });
-            });
+                Environment.SetEnvironmentVariable(
+                    ConnectionStringEnvironmentKey,
+                    _previousConnectionString);
+            }
+        }
     }
 
     public void DeleteDatabase()
