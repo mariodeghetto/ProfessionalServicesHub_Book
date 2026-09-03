@@ -1,0 +1,46 @@
+@page "/account/logout"
+@attribute [Authorize]
+@layout AccountLayout
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+
+<PageTitle>Sign out - Professional Services Hub</PageTitle>
+
+<h1 class="h3">Sign out</h1>
+<p class="text-secondary">
+    End the current Professional Services Hub session.
+</p>
+
+<EditForm Model="Input"
+          method="post"
+          OnValidSubmit="LogoutAsync"
+          FormName="logout">
+    <AntiforgeryToken />
+
+    <button type="submit" class="btn btn-primary">
+        Sign out
+    </button>
+
+    <a class="btn btn-outline-secondary ms-2"
+       href="/">
+        Cancel
+    </a>
+</EditForm>
+
+@code {
+    [SupplyParameterFromForm]
+    private LogoutInput Input { get; set; } = new();
+
+    private async Task LogoutAsync()
+    {
+        await SignInManager.SignOutAsync();
+
+        Navigation.NavigateTo(
+            "/account/login",
+            forceLoad: true);
+    }
+
+    private sealed class LogoutInput;
+}
