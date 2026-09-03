@@ -13,7 +13,7 @@ public sealed class BusinessDocument
     public required string Sha256 { get; set; }
     public DocumentCategory Category { get; set; } = DocumentCategory.General;
     public string? Description { get; set; }
-    public DateTimeOffset UploadedAtUtc { get; set; }
+    public DateTime UploadedAtUtc { get; set; }
     public string? UploadedBy { get; set; }
     public bool IsArchived { get; set; }
     public int? ClientId { get; set; }
