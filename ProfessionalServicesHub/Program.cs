@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,7 @@ builder.Services.AddScoped<EngagementAccessService>();
 builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
 builder.Services.AddScoped<ClientLookupService>();
+builder.Services.AddScoped<EngagementQueryService>();
 builder.Services.AddScoped<ActivityBoardService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddSingleton<IDocumentStorage, LocalDocumentStorage>();
@@ -153,6 +155,7 @@ app.Run();
 
 static async Task<IResult> DownloadDocumentAsync(
     int documentId,
+    ClaimsPrincipal principal,
     DocumentService documentService,
     CancellationToken cancellationToken)
 {
@@ -160,6 +163,7 @@ static async Task<IResult> DownloadDocumentAsync(
     {
         var download = await documentService.GetDownloadAsync(
             documentId,
+            principal,
             cancellationToken);
 
         return Results.Stream(
