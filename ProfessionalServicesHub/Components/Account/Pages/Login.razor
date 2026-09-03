@@ -33,7 +33,7 @@
         <label for="login-email" class="form-label">Email</label>
         <InputText id="login-email"
                    class="form-control"
-                   @bind-Value="Input.Email"
+                   @bind-Value="Input!.Email"
                    autocomplete="username" />
     </div>
 
@@ -41,7 +41,7 @@
         <label for="login-password" class="form-label">Password</label>
         <InputText id="login-password"
                    class="form-control"
-                   @bind-Value="Input.Password"
+                   @bind-Value="Input!.Password"
                    type="password"
                    autocomplete="current-password" />
     </div>
@@ -49,7 +49,7 @@
     <div class="form-check mb-3">
         <InputCheckbox id="login-remember"
                        class="form-check-input"
-                       @bind-Value="Input.RememberMe" />
+                       @bind-Value="Input!.RememberMe" />
         <label for="login-remember" class="form-check-label">
             Remember me
         </label>
@@ -65,18 +65,23 @@
     private string? ReturnUrl { get; set; }
 
     [SupplyParameterFromForm]
-    private LoginInput Input { get; set; } = new();
+    private LoginInput? Input { get; set; }
 
     private string? ErrorMessage { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Input ??= new LoginInput();
+    }
 
     private async Task LoginAsync()
     {
         ErrorMessage = null;
 
         var result = await SignInManager.PasswordSignInAsync(
-            Input.Email,
-            Input.Password,
-            Input.RememberMe,
+            Input!.Email,
+            Input!.Password,
+            Input!.RememberMe,
             lockoutOnFailure: true);
 
         if (!result.Succeeded)
