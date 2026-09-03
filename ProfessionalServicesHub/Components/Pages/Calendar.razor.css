@@ -20,3 +20,9 @@
 .schedule-entry small {
     font-size: 0.8rem;
 }
+
+.calendar-scheduler ::deep .e-schedule .e-vertical-view .e-left-indent .e-all-day-cells,
+.calendar-scheduler ::deep .e-schedule .e-vertical-view .e-date-header-wrap .e-all-day-cells {
+    min-height: 72px !important;
+    height: 72px !important;
+}
