@@ -24,7 +24,7 @@ namespace ProfessionalServicesHub.Infrastructure.Data.Migrations
                     Sha256 = table.Column<string>(type: "TEXT", maxLength: 64, nullable: false),
                     Category = table.Column<int>(type: "INTEGER", nullable: false),
                     Description = table.Column<string>(type: "TEXT", maxLength: 1000, nullable: true),
-                    UploadedAtUtc = table.Column<DateTimeOffset>(type: "TEXT", nullable: false),
+                    UploadedAtUtc = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UploadedBy = table.Column<string>(type: "TEXT", maxLength: 120, nullable: true),
                     IsArchived = table.Column<bool>(type: "INTEGER", nullable: false),
                     ClientId = table.Column<int>(type: "INTEGER", nullable: true),
