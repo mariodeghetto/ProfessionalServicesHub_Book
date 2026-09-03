@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Domain.Calendar;
 using ProfessionalServicesHub.Domain.Clients;
 using ProfessionalServicesHub.Domain.Work;
 
@@ -12,6 +13,8 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
     public DbSet<Engagement> Engagements => Set<Engagement>();
 
     public DbSet<WorkActivity> WorkActivities => Set<WorkActivity>();
+
+    public DbSet<CalendarEntry> CalendarEntries => Set<CalendarEntry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -76,5 +79,40 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             .WithMany(x => x.Activities)
             .HasForeignKey(x => x.EngagementId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        var calendarEntry = modelBuilder.Entity<CalendarEntry>();
+
+        calendarEntry.Property(x => x.Subject)
+            .HasMaxLength(200)
+            .IsRequired();
+
+        calendarEntry.Property(x => x.Location)
+            .HasMaxLength(200);
+
+        calendarEntry.Property(x => x.Assignee)
+            .HasMaxLength(120);
+
+        calendarEntry.Property(x => x.Description)
+            .HasMaxLength(2000);
+
+        calendarEntry.HasIndex(x => x.StartTime);
+        calendarEntry.HasIndex(x => x.EndTime);
+        calendarEntry.HasIndex(x => x.EngagementId);
+        calendarEntry.HasIndex(x => x.Assignee);
+
+        calendarEntry.HasOne(x => x.Client)
+            .WithMany()
+            .HasForeignKey(x => x.ClientId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        calendarEntry.HasOne(x => x.Engagement)
+            .WithMany()
+            .HasForeignKey(x => x.EngagementId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        calendarEntry.HasOne(x => x.WorkActivity)
+            .WithMany()
+            .HasForeignKey(x => x.WorkActivityId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
