@@ -99,14 +99,16 @@ From the repository root:
 dotnet ef database update --project ProfessionalServicesHub/ProfessionalServicesHub.csproj --startup-project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
-The current migrations create the client model plus the Chapter 6
-`Engagements` and `WorkActivities` tables, foreign keys, and indexes.
+The current migrations create the client model, the Chapter 6
+`Engagements` and `WorkActivities` tables, and the Chapter 7
+`CalendarEntries` table with its foreign keys and indexes.
 
 The Development seed is intentionally separate from schema migration. It runs
 when the application starts, inserts deterministic sample clients only when
-the Clients table is empty, and independently initializes the workflow slice
-with two sample engagements and five work activities when those workflow
-tables are empty.
+the Clients table is empty, independently initializes the workflow slice with
+two sample engagements and five work activities, and finally creates two
+calendar appointments plus one all-day deadline when the CalendarEntries
+table is empty.
 
 ## 7. Run the application
 
@@ -118,21 +120,24 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 6 milestone, verify that:
+At the Chapter 7 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
-- `/tasks` displays the Planned, In progress, Waiting, and Completed Kanban columns
-- the development seed produces five work-activity cards across Alex Morgan, Jordan Lee, and Unassigned swimlanes
-- engagement codes such as `ENG-001` and `ENG-002` appear as the work context on task cards
-- `/engagements` clearly states that engagement data already supports the task workflow while full engagement management is deferred
-- Planned -> Completed is rejected by the workflow
-- Planned -> In progress is accepted and remains persisted after refresh
-- reordering within one column is rejected with an explicit message because Rank persistence is not implemented yet
-- In progress -> Completed is accepted
-- Completed -> Planned is rejected
-- Completed -> In progress is accepted as an explicit reopen operation
-- Waiting -> In progress and In progress -> Waiting are accepted
-- no Syncfusion asset, license, Blazor, EF Core, or Kanban runtime error appears in the browser console or application log
+- the Chapter 6 Kanban workflow remains operational and persisted
+- the primary navigation remains fully visible on short-content pages without an artificial vertical scrollbar
+- `/calendar` opens in WorkWeek view and displays the deterministic calendar seed
+- the seed includes `Accessibility review meeting`, `Reporting workshop`, and `Send accessibility findings`
+- Day, Week, WorkWeek, Month, and Agenda navigation loads the appropriate time window
+- appointment creation persists after refresh
+- deadline creation persists as an all-day entry after refresh
+- all-day entries display the subject and entry type on two readable lines
+- dragging an appointment to another free time persists the new interval
+- resizing an appointment persists the new end time
+- editing through the Scheduler editor persists the same validated data
+- deleting a calendar entry removes it permanently after refresh
+- overlapping timed appointments for the same assignee are rejected by the application service
+- invalid intervals with EndTime less than or equal to StartTime are rejected
+- no Syncfusion asset, license, Blazor, EF Core, Kanban, or Scheduler runtime error appears in the browser console or application log
 
 If the local HTTPS development certificate is not trusted, run:
 
