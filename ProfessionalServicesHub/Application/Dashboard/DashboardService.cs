@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Domain.Calendar;
 using ProfessionalServicesHub.Domain.Work;
 using ProfessionalServicesHub.Infrastructure.Data;
@@ -6,13 +7,16 @@ using ProfessionalServicesHub.Infrastructure.Data;
 namespace ProfessionalServicesHub.Application.Dashboard;
 
 public sealed class DashboardService(
-    IDbContextFactory<ApplicationDbContext> dbFactory)
+    IDbContextFactory<ApplicationDbContext> dbFactory,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<DashboardSnapshot> LoadAsync(
         DateTime nowLocal,
         DateTime utcNow,
         CancellationToken cancellationToken = default)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
@@ -21,55 +25,64 @@ public sealed class DashboardService(
         var trendEnd = today.AddDays(14);
         var thirtyDaysAgoUtc = utcNow.AddDays(-30);
 
+        var visibleEngagements = db.Engagements
+            .AsNoTracking()
+            .VisibleTo(db, user);
+
+        var visibleEngagementIds =
+            visibleEngagements.Select(engagement => engagement.Id);
+
+        var visibleActivities = db.WorkActivities
+            .AsNoTracking()
+            .Where(activity =>
+                visibleEngagementIds.Contains(activity.EngagementId));
+
+        var visibleCalendarEntries = db.CalendarEntries
+            .AsNoTracking()
+            .VisibleTo(db, user);
+
+        var visibleDocuments = db.Documents
+            .AsNoTracking()
+            .VisibleTo(db, user);
+
         var engagementsWithOpenActivities =
-            await db.Engagements
-                .AsNoTracking()
-                .CountAsync(
-                    engagement => engagement.Activities.Any(
-                        activity =>
-                            activity.Status != ActivityStatus.Completed),
-                    cancellationToken);
+            await visibleEngagements.CountAsync(
+                engagement => engagement.Activities.Any(
+                    activity =>
+                        activity.Status != ActivityStatus.Completed),
+                cancellationToken);
 
         var openActivities =
-            await db.WorkActivities
-                .AsNoTracking()
-                .CountAsync(
-                    activity =>
-                        activity.Status != ActivityStatus.Completed,
-                    cancellationToken);
+            await visibleActivities.CountAsync(
+                activity =>
+                    activity.Status != ActivityStatus.Completed,
+                cancellationToken);
 
         var overdueActivities =
-            await db.WorkActivities
-                .AsNoTracking()
-                .CountAsync(
-                    activity =>
-                        activity.Status != ActivityStatus.Completed &&
-                        activity.DueDate != null &&
-                        activity.DueDate < today,
-                    cancellationToken);
+            await visibleActivities.CountAsync(
+                activity =>
+                    activity.Status != ActivityStatus.Completed &&
+                    activity.DueDate != null &&
+                    activity.DueDate < today,
+                cancellationToken);
 
         var deadlinesNextSevenDays =
-            await db.CalendarEntries
-                .AsNoTracking()
-                .CountAsync(
-                    entry =>
-                        entry.Kind == CalendarEntryKind.Deadline &&
-                        entry.StartTime >= today &&
-                        entry.StartTime < sevenDayEnd,
-                    cancellationToken);
+            await visibleCalendarEntries.CountAsync(
+                entry =>
+                    entry.Kind == CalendarEntryKind.Deadline &&
+                    entry.StartTime >= today &&
+                    entry.StartTime < sevenDayEnd,
+                cancellationToken);
 
         var documentsLastThirtyDays =
-            await db.Documents
-                .AsNoTracking()
-                .CountAsync(
-                    document =>
-                        !document.IsArchived &&
-                        document.UploadedAtUtc >= thirtyDaysAgoUtc,
-                    cancellationToken);
+            await visibleDocuments.CountAsync(
+                document =>
+                    !document.IsArchived &&
+                    document.UploadedAtUtc >= thirtyDaysAgoUtc,
+                cancellationToken);
 
         var rawStatusCounts =
-            await db.WorkActivities
-                .AsNoTracking()
+            await visibleActivities
                 .GroupBy(activity => activity.Status)
                 .Select(group => new
                 {
@@ -104,13 +117,11 @@ public sealed class DashboardService(
         };
 
         var deadlineDates =
-            await db.CalendarEntries
-                .AsNoTracking()
-                .Where(
-                    entry =>
-                        entry.Kind == CalendarEntryKind.Deadline &&
-                        entry.StartTime >= today &&
-                        entry.StartTime < trendEnd)
+            await visibleCalendarEntries
+                .Where(entry =>
+                    entry.Kind == CalendarEntryKind.Deadline &&
+                    entry.StartTime >= today &&
+                    entry.StartTime < trendEnd)
                 .Select(entry => entry.StartTime)
                 .ToListAsync(cancellationToken);
 
@@ -131,11 +142,9 @@ public sealed class DashboardService(
                 .ToList();
 
         var rawAssigneeLoad =
-            await db.WorkActivities
-                .AsNoTracking()
-                .Where(
-                    activity =>
-                        activity.Status != ActivityStatus.Completed)
+            await visibleActivities
+                .Where(activity =>
+                    activity.Status != ActivityStatus.Completed)
                 .GroupBy(
                     activity =>
                         activity.Assignee ?? "Unassigned")
@@ -148,12 +157,11 @@ public sealed class DashboardService(
 
         var activitiesByAssignee =
             rawAssigneeLoad
-                .Select(
-                    item => new AssigneeLoadPoint(
-                        string.IsNullOrWhiteSpace(item.Assignee)
-                            ? "Unassigned"
-                            : item.Assignee,
-                        item.Count))
+                .Select(item => new AssigneeLoadPoint(
+                    string.IsNullOrWhiteSpace(item.Assignee)
+                        ? "Unassigned"
+                        : item.Assignee,
+                    item.Count))
                 .OrderByDescending(item => item.Count)
                 .ThenBy(item => item.Assignee)
                 .ToList();
