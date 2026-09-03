@@ -314,10 +314,17 @@
     private async Task OnDocumentRowSelected(
         RowSelectEventArgs<DocumentListItem> args)
     {
-        SelectedDocument = args.Data;
+        var selectedDocument = args.Data;
+
+        if (selectedDocument is null)
+        {
+            return;
+        }
+
+        SelectedDocument = selectedDocument;
         StatusMessage = null;
 
-        if (!args.Data.IsPdf)
+        if (!selectedDocument.IsPdf)
         {
             PreviewMessage =
                 "Preview is available for PDF documents. Use Download for this file type.";
@@ -339,20 +346,20 @@
         try
         {
             await using var source =
-                await DocumentService.OpenAsync(args.Data.Id);
+                await DocumentService.OpenAsync(selectedDocument.Id);
             using var buffer = new MemoryStream();
             await source.CopyToAsync(buffer);
             buffer.Position = 0;
 
             await PdfViewer.LoadAsync(buffer);
-            PreviewMessage = args.Data.FileName;
+            PreviewMessage = selectedDocument.FileName;
         }
         catch (Exception ex)
         {
             Logger.LogError(
                 ex,
                 "Unable to preview document {DocumentId}.",
-                args.Data.Id);
+                selectedDocument.Id);
             PreviewMessage =
                 "Unable to preview the selected PDF.";
         }
