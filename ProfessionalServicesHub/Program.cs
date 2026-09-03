@@ -84,6 +84,11 @@ builder.Services.AddAuthorizationBuilder()
         AppPolicies.DispatchWork,
         policy => policy.RequireRole(
             AppRoles.Administrator,
+            AppRoles.Coordinator))
+    .AddPolicy(
+        AppPolicies.ManageClients,
+        policy => policy.RequireRole(
+            AppRoles.Administrator,
             AppRoles.Coordinator));
 
 builder.Services.AddScoped<ICurrentUserAccessor,
