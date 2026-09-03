@@ -1,20 +1,26 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Domain.Calendar;
+using ProfessionalServicesHub.Domain.Work;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Application.Calendar;
 
 public sealed class CalendarService(
-    IDbContextFactory<ApplicationDbContext> dbFactory)
+    IDbContextFactory<ApplicationDbContext> dbFactory,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<List<ScheduleItem>> GetRangeAsync(
         DateTime from,
         DateTime to)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db = await dbFactory.CreateDbContextAsync();
 
         return await db.CalendarEntries
             .AsNoTracking()
+            .VisibleTo(db, user)
             .Where(x => x.StartTime < to && x.EndTime > from)
             .OrderBy(x => x.StartTime)
             .ThenBy(x => x.Id)
@@ -54,7 +60,21 @@ public sealed class CalendarService(
                 validation);
         }
 
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db = await dbFactory.CreateDbContextAsync();
+
+        var scopeError = await ValidateWriteScopeAsync(
+            db,
+            user,
+            item.EngagementId);
+
+        if (scopeError is not null)
+        {
+            return new(
+                CalendarWriteStatus.Forbidden,
+                scopeError);
+        }
 
         var relationshipError =
             await ValidateRelationshipsAsync(db, item);
@@ -66,7 +86,7 @@ public sealed class CalendarService(
                 relationshipError);
         }
 
-        if (await HasConflictAsync(db, item))
+        if (await HasConflictAsync(db, item, user))
         {
             return new(
                 CalendarWriteStatus.Conflict,
@@ -102,6 +122,8 @@ public sealed class CalendarService(
                 validation);
         }
 
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db = await dbFactory.CreateDbContextAsync();
 
         var entity = await db.CalendarEntries
@@ -114,6 +136,30 @@ public sealed class CalendarService(
                 "The calendar entry is no longer available.");
         }
 
+        var existingScopeError = await ValidateWriteScopeAsync(
+            db,
+            user,
+            entity.EngagementId);
+
+        if (existingScopeError is not null)
+        {
+            return new(
+                CalendarWriteStatus.Forbidden,
+                existingScopeError);
+        }
+
+        var targetScopeError = await ValidateWriteScopeAsync(
+            db,
+            user,
+            item.EngagementId);
+
+        if (targetScopeError is not null)
+        {
+            return new(
+                CalendarWriteStatus.Forbidden,
+                targetScopeError);
+        }
+
         var relationshipError =
             await ValidateRelationshipsAsync(db, item);
 
@@ -124,7 +170,7 @@ public sealed class CalendarService(
                 relationshipError);
         }
 
-        if (await HasConflictAsync(db, item))
+        if (await HasConflictAsync(db, item, user))
         {
             return new(
                 CalendarWriteStatus.Conflict,
@@ -141,6 +187,8 @@ public sealed class CalendarService(
 
     public async Task<CalendarWriteResult> DeleteAsync(int id)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db = await dbFactory.CreateDbContextAsync();
 
         var entity = await db.CalendarEntries
@@ -151,6 +199,18 @@ public sealed class CalendarService(
             return new(
                 CalendarWriteStatus.NotFound,
                 "The calendar entry is no longer available.");
+        }
+
+        var scopeError = await ValidateWriteScopeAsync(
+            db,
+            user,
+            entity.EngagementId);
+
+        if (scopeError is not null)
+        {
+            return new(
+                CalendarWriteStatus.Forbidden,
+                scopeError);
         }
 
         db.CalendarEntries.Remove(entity);
@@ -199,6 +259,34 @@ public sealed class CalendarService(
             : value.Trim();
     }
 
+    private static async Task<string?> ValidateWriteScopeAsync(
+        ApplicationDbContext db,
+        CurrentUser user,
+        int? engagementId)
+    {
+        if (EngagementScope.HasGlobalOperationalScope(user))
+        {
+            return null;
+        }
+
+        if (engagementId is not int scopedEngagementId)
+        {
+            return
+                "You do not have permission to modify general calendar entries.";
+        }
+
+        var canEdit = await db.EngagementAssignments
+            .AsNoTracking()
+            .AnyAsync(assignment =>
+                assignment.EngagementId == scopedEngagementId &&
+                assignment.UserId == user.Id &&
+                assignment.Kind != AssignmentKind.Observer);
+
+        return canEdit
+            ? null
+            : "You do not have permission to modify this calendar entry.";
+    }
+
     private static async Task<string?> ValidateRelationshipsAsync(
         ApplicationDbContext db,
         ScheduleItem item)
@@ -229,7 +317,8 @@ public sealed class CalendarService(
             if (item.ClientId.HasValue &&
                 engagement.ClientId != item.ClientId.Value)
             {
-                return "The selected engagement does not belong to the selected client.";
+                return
+                    "The selected engagement does not belong to the selected client.";
             }
         }
 
@@ -253,7 +342,8 @@ public sealed class CalendarService(
             if (item.EngagementId.HasValue &&
                 activity.EngagementId != item.EngagementId.Value)
             {
-                return "The selected work activity does not belong to the selected engagement.";
+                return
+                    "The selected work activity does not belong to the selected engagement.";
             }
         }
 
@@ -262,7 +352,8 @@ public sealed class CalendarService(
 
     private static async Task<bool> HasConflictAsync(
         ApplicationDbContext db,
-        ScheduleItem item)
+        ScheduleItem item,
+        CurrentUser user)
     {
         if (item.Kind != CalendarEntryKind.Appointment ||
             item.IsAllDay ||
@@ -273,13 +364,16 @@ public sealed class CalendarService(
 
         var assignee = item.Assignee.Trim();
 
-        return await db.CalendarEntries.AnyAsync(x =>
-            x.Id != item.Id &&
-            x.Kind == CalendarEntryKind.Appointment &&
-            !x.IsAllDay &&
-            x.Assignee == assignee &&
-            x.StartTime < item.EndTime &&
-            x.EndTime > item.StartTime);
+        return await db.CalendarEntries
+            .AsNoTracking()
+            .VisibleTo(db, user)
+            .AnyAsync(x =>
+                x.Id != item.Id &&
+                x.Kind == CalendarEntryKind.Appointment &&
+                !x.IsAllDay &&
+                x.Assignee == assignee &&
+                x.StartTime < item.EndTime &&
+                x.EndTime > item.StartTime);
     }
 
     private static void Apply(
