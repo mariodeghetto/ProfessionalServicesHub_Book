@@ -50,9 +50,7 @@ public sealed class TestWebApplicationFactory
                     new Dictionary<string, string?>
                     {
                         ["ConnectionStrings:ProfessionalServicesHub"] =
-                            _connectionString,
-                        ["Syncfusion:LicenseKey"] =
-                            "TEST-LICENSE-KEY"
+                            _connectionString
                     });
             });
     }
