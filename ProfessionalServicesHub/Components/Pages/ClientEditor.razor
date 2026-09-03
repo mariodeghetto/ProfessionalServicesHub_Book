@@ -1,5 +1,6 @@
 @page "/clients/new"
 @page "/clients/{Id:int}"
+@attribute [Authorize(Policy = AppPolicies.ManageClients)]
 @inject ClientCommandService ClientCommands
 @inject UiNotificationService Notifications
 @inject NavigationManager Navigation
@@ -244,6 +245,13 @@ else if (EditContext is not null)
             {
                 FormError =
                     "The client no longer exists or is not available.";
+                return;
+            }
+
+            if (result.Status == SaveClientStatus.Forbidden)
+            {
+                FormError =
+                    "You do not have permission to modify clients.";
                 return;
             }
 
