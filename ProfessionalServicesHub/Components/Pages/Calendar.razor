@@ -1,5 +1,7 @@
 @page "/calendar"
 @inject CalendarService CalendarOperations
+@inject SfDialogService DialogService
+@inject UiNotificationService Notifications
 @inject ILogger<Calendar> Logger
 
 <PageTitle>Calendar - Professional Services Hub</PageTitle>
@@ -278,7 +280,26 @@
                 }
 
                 args.Cancel = true;
+
+                var confirmed = await DialogService.ConfirmAsync(
+                    $"The calendar entry '{item.Subject}' will be permanently deleted.",
+                    "Delete calendar entry?");
+
+                if (!confirmed)
+                {
+                    return;
+                }
+
                 result = await CalendarOperations.DeleteAsync(item.Id);
+
+                if (result.Success)
+                {
+                    await Notifications.PublishAsync(
+                        new UiNotification(
+                            "Calendar entry deleted",
+                            "The calendar has been updated.",
+                            UiNotificationKind.Information));
+                }
             }
 
             if (result is null)

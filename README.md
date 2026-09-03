@@ -86,7 +86,8 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 The current Book Edition milestone includes the application shell, complete
 client management, operational task workflow, calendar scheduling, a private
-document repository, and an operational dashboard. The
+document repository, an operational dashboard, and a shared presentation
+experience layer for feedback, confirmation, lookup, and busy states. The
 Clients page uses a Syncfusion DataGrid for exploration and selection, while a
 reusable client editor supports creation and modification with Syncfusion
 inputs, Blazor validation, database-backed duplicate-code checks, unsaved-change
@@ -128,6 +129,17 @@ open activities by assignee. Syncfusion Charts renders column, line, and
 accumulation visualizations, while KPI cards remain lightweight HTML and CSS.
 The dashboard supports manual refresh with a visible completion timestamp and
 uses a responsive layout that collapses charts before they become cramped.
+
+Chapter 10 adds reusable presentation-layer UX services and components without
+moving UI concerns into the Application or Domain layers. A scoped
+`UiNotificationService` publishes consistent toast notifications through one
+global `AppToastHost`, while one `SfDialogProvider` supports confirmation
+dialogs. Client saving uses a visible busy state with Syncfusion Spinner,
+calendar deletion requires explicit confirmation, document archive exposes a
+secondary tooltip and success notifications, and successful Kanban transitions
+publish concise feedback. The Clients page also adds a server-side
+`SfAutoComplete` lookup with a two-character minimum, 300 ms debounce, a
+20-result limit, and cancellation of stale searches.
 
 ## Local database
 
@@ -182,6 +194,9 @@ Directory.Packages.props
 
 All Syncfusion packages must use the same Syncfusion release. Chapter 9 adds
 `Syncfusion.Blazor.Charts` for the operational dashboard visualizations.
+Chapter 10 adds `Syncfusion.Blazor.Notifications`,
+`Syncfusion.Blazor.Popups`, and `Syncfusion.Blazor.Spinner`; the existing
+DropDowns package is reused for `SfAutoComplete`.
 
 ## License
 

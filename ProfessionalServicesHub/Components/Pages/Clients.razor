@@ -1,5 +1,7 @@
 @page "/clients"
+@implements IDisposable
 @inject ClientQueryService ClientQueries
+@inject ClientLookupService ClientLookup
 @inject NavigationManager Navigation
 @inject ILogger<Clients> Logger
 
@@ -19,6 +21,47 @@
         </SfButton>
     </Actions>
 </PageHeader>
+
+<section class="client-lookup-panel"
+         aria-labelledby="client-lookup-heading">
+    <div>
+        <h2 id="client-lookup-heading">Quick client lookup</h2>
+        <p>
+            Type at least two characters from the client code or name.
+        </p>
+    </div>
+
+    <div class="client-lookup-row">
+        <SfAutoComplete TValue="int?"
+                        TItem="ClientLookupItem"
+                        @ref="ClientLookupRef"
+                        ID="client-lookup"
+                        DataSource="@LookupItems"
+                        Placeholder="Search by code or name"
+                        AllowFiltering="true"
+                        DebounceDelay="300"
+                        MinLength="2"
+                        @bind-Value="QuickClientId">
+            <AutoCompleteFieldSettings Text="@nameof(ClientLookupItem.DisplayName)"
+                                       Value="@nameof(ClientLookupItem.Id)" />
+            <AutoCompleteEvents TValue="int?"
+                                TItem="ClientLookupItem"
+                                Filtering="OnClientFiltering" />
+        </SfAutoComplete>
+
+        <SfButton Disabled="@(QuickClientId is null)"
+                  OnClick="OpenQuickClient">
+            Open client
+        </SfButton>
+    </div>
+
+    @if (!string.IsNullOrWhiteSpace(LookupError))
+    {
+        <div class="client-lookup-error" role="alert">
+            @LookupError
+        </div>
+    }
+</section>
 
 @if (IsLoading)
 {
@@ -88,11 +131,21 @@ else
 
     private List<ClientListItem> ClientItems { get; set; } = [];
 
+    private List<ClientLookupItem> LookupItems { get; set; } = [];
+
+    private SfAutoComplete<int?, ClientLookupItem>? ClientLookupRef { get; set; }
+
+    private CancellationTokenSource? LookupCancellation { get; set; }
+
+    private int? QuickClientId { get; set; }
+
     private ClientListItem? SelectedClient { get; set; }
 
     private bool IsLoading { get; set; }
 
     private string? LoadError { get; set; }
+
+    private string? LookupError { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -139,5 +192,61 @@ else
         {
             Navigation.NavigateTo($"/clients/{SelectedClient.Id}");
         }
+    }
+
+    private void OpenQuickClient()
+    {
+        if (QuickClientId is int clientId)
+        {
+            Navigation.NavigateTo($"/clients/{clientId}");
+        }
+    }
+
+    private async Task OnClientFiltering(
+        Syncfusion.Blazor.DropDowns.FilteringEventArgs args)
+    {
+        args.PreventDefaultAction = true;
+
+        if (ClientLookupRef is null)
+        {
+            return;
+        }
+
+        LookupCancellation?.Cancel();
+        LookupCancellation?.Dispose();
+        LookupCancellation = new CancellationTokenSource();
+
+        try
+        {
+            LookupError = null;
+
+            LookupItems = (await ClientLookup.SearchAsync(
+                    args.Text ?? string.Empty,
+                    LookupCancellation.Token))
+                .ToList();
+
+            await ClientLookupRef.FilterAsync(LookupItems);
+        }
+        catch (OperationCanceledException)
+        {
+            // A newer search replaced this one.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to search clients for {SearchText}.",
+                args.Text);
+
+            LookupItems = [];
+            LookupError =
+                "Unable to search clients. Please try again.";
+        }
+    }
+
+    public void Dispose()
+    {
+        LookupCancellation?.Cancel();
+        LookupCancellation?.Dispose();
     }
 }

@@ -20,7 +20,10 @@
     <PackageReference Include="Syncfusion.Blazor.Inputs" />
     <PackageReference Include="Syncfusion.Blazor.Kanban" />
     <PackageReference Include="Syncfusion.Blazor.Navigations" />
+    <PackageReference Include="Syncfusion.Blazor.Notifications" />
+    <PackageReference Include="Syncfusion.Blazor.Popups" />
     <PackageReference Include="Syncfusion.Blazor.Schedule" />
+    <PackageReference Include="Syncfusion.Blazor.Spinner" />
     <PackageReference Include="Syncfusion.Blazor.SfPdfViewer" />
     <PackageReference Include="Syncfusion.Blazor.Themes" />
   </ItemGroup>

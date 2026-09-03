@@ -1,5 +1,6 @@
 @page "/tasks"
 @inject ActivityBoardService ActivityBoard
+@inject UiNotificationService Notifications
 @inject ILogger<Tasks> Logger
 
 <PageTitle>Tasks - Professional Services Hub</PageTitle>
@@ -92,6 +93,8 @@ else
 
     private string? BoardMessage { get; set; }
 
+    private bool IsProcessingMove { get; set; }
+
     private int? DraggedActivityId { get; set; }
 
     private ActivityStatus? DragSourceStatus { get; set; }
@@ -124,6 +127,12 @@ else
     private void OnDragStart(
         Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
     {
+        if (IsProcessingMove)
+        {
+            args.Cancel = true;
+            return;
+        }
+
         var item = args.Data?.FirstOrDefault();
 
         if (item is null ||
@@ -175,8 +184,17 @@ else
             return;
         }
 
+        if (IsProcessingMove)
+        {
+            args.Cancel = true;
+            await ReloadAsync();
+            return;
+        }
+
         try
         {
+            IsProcessingMove = true;
+
             var result = await ActivityBoard.MoveAsync(
                 item.Id,
                 source,
@@ -199,6 +217,12 @@ else
             else
             {
                 BoardMessage = null;
+
+                await Notifications.PublishAsync(
+                    new UiNotification(
+                        "Task updated",
+                        $"'{item.Title}' moved to {GetStatusLabel(target)}.",
+                        UiNotificationKind.Success));
             }
         }
         catch (Exception ex)
@@ -214,7 +238,21 @@ else
             BoardMessage =
                 "Unable to update the task. Please try again later.";
         }
+        finally
+        {
+            IsProcessingMove = false;
+        }
 
         await ReloadAsync();
     }
+
+    private static string GetStatusLabel(ActivityStatus status) =>
+        status switch
+        {
+            ActivityStatus.Planned => "Planned",
+            ActivityStatus.InProgress => "In progress",
+            ActivityStatus.Waiting => "Waiting",
+            ActivityStatus.Completed => "Completed",
+            _ => status.ToString()
+        };
 }
