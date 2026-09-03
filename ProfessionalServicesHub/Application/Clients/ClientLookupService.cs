@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Application.Clients;
@@ -8,7 +9,8 @@ public sealed record ClientLookupItem(
     string DisplayName);
 
 public sealed class ClientLookupService(
-    IDbContextFactory<ApplicationDbContext> dbFactory)
+    IDbContextFactory<ApplicationDbContext> dbFactory,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<IReadOnlyList<ClientLookupItem>> SearchAsync(
         string text,
@@ -21,11 +23,14 @@ public sealed class ClientLookupService(
             return [];
         }
 
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
         return await db.Clients
             .AsNoTracking()
+            .VisibleTo(db, user)
             .Where(client =>
                 client.Name.Contains(normalized) ||
                 client.Code.Contains(normalized))
