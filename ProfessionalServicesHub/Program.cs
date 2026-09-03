@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Calendar;
 using ProfessionalServicesHub.Application.Clients;
 using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
@@ -33,6 +34,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
 builder.Services.AddScoped<ActivityBoardService>();
+builder.Services.AddScoped<CalendarService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -47,6 +49,7 @@ if (app.Environment.IsDevelopment())
 
     await DevelopmentDataSeeder.SeedAsync(factory);
     await DevelopmentDataSeeder.SeedWorkAsync(factory);
+    await DevelopmentDataSeeder.SeedCalendarAsync(factory);
 }
 
 // Configure the HTTP request pipeline.
