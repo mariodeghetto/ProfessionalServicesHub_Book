@@ -182,6 +182,25 @@ as errors, runs all automated tests, verifies formatting, verifies that the EF
 Core model has no pending migration changes, and publishes the application.
 PowerShell and Bash versions are provided under `scripts`.
 
+## Chapter 13 extension roadmap
+
+Chapter 13 intentionally makes no runtime, schema, package, or configuration
+changes to the Book Edition. The verified Chapter 12 application is the final
+functional baseline of the companion repository.
+
+The chapter discusses possible future evolution paths such as feature-oriented
+modularity, application events, richer workflows, operational inboxes,
+communications, advanced document management, reporting, automation, external
+integrations, audit, multi-tenancy, feature flags, and AI-assisted capabilities.
+These are architectural extension points and product options, not features that
+the reader should expect to find already implemented in this repository.
+
+Any future implementation of one of these capabilities should be introduced as
+a separate milestone with its own contracts, persistence changes, authorization
+rules, tests, documentation, and deployment verification. Existing boundaries
+such as `WorkflowRules`, `EngagementScope`, `CurrentUser`, and
+`IDocumentStorage` remain the reference points described by the chapter.
+
 ## Local database
 
 The Book Edition uses SQLite as its default development database.
