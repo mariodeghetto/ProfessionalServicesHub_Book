@@ -21,7 +21,8 @@ public sealed class EngagementScopeTests
             new TestCurrentUserAccessor(
                 TestUsers.Collaborator()));
 
-        var rows = await service.GetVisibleAsync();
+        var rows = await service.GetVisibleAsync(
+            TestContext.Current.CancellationToken);
 
         var row = Assert.Single(rows);
         Assert.Equal("ENG-001", row.Code);
@@ -41,7 +42,8 @@ public sealed class EngagementScopeTests
             new TestCurrentUserAccessor(
                 TestUsers.Administrator()));
 
-        var rows = await service.GetVisibleAsync();
+        var rows = await service.GetVisibleAsync(
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(2, rows.Count);
         Assert.Equal(
@@ -67,10 +69,12 @@ public sealed class EngagementScopeTests
 
         Assert.True(
             await service.CanReadAsync(
-                seeded.FirstEngagementId));
+                seeded.FirstEngagementId,
+                TestContext.Current.CancellationToken));
 
         Assert.False(
             await service.CanEditAsync(
-                seeded.FirstEngagementId));
+                seeded.FirstEngagementId,
+                TestContext.Current.CancellationToken));
     }
 }
