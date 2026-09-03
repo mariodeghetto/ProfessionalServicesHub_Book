@@ -54,6 +54,13 @@
             Open client
         </SfButton>
     </div>
+
+    @if (!string.IsNullOrWhiteSpace(LookupError))
+    {
+        <div class="client-lookup-error" role="alert">
+            @LookupError
+        </div>
+    }
 </section>
 
 @if (IsLoading)
@@ -138,6 +145,8 @@ else
 
     private string? LoadError { get; set; }
 
+    private string? LookupError { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         if (IsLoading)
@@ -209,6 +218,8 @@ else
 
         try
         {
+            LookupError = null;
+
             LookupItems = (await ClientLookup.SearchAsync(
                     args.Text ?? string.Empty,
                     LookupCancellation.Token))
@@ -219,6 +230,17 @@ else
         catch (OperationCanceledException)
         {
             // A newer search replaced this one.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to search clients for {SearchText}.",
+                args.Text);
+
+            LookupItems = [];
+            LookupError =
+                "Unable to search clients. Please try again.";
         }
     }
 
