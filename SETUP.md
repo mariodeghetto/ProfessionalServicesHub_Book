@@ -261,7 +261,22 @@ Migration source files are versioned under:
 Infrastructure/Data/Migrations
 ```
 
-## 9. Configuration principles
+## 9. Chapter 13 extension scope
+
+Chapter 13 introduces no additional setup requirements. It does not add
+packages, migrations, environment variables, secrets, services, background
+workers, external providers, or UI components to the Book Edition.
+
+The Chapter 12 quality gate remains the authoritative verification path for the
+final companion application. After any documentation-only Chapter 13 change,
+run the same gate to confirm that the executable baseline remains unchanged.
+
+The extension examples in Chapter 13 are design directions. If any of them is
+implemented in a later product milestone, treat that work as a new change set
+with explicit configuration, migrations, authorization, tests, and deployment
+instructions rather than assuming it is part of the Book Edition.
+
+## 10. Configuration principles
 
 The repository follows these rules:
 
@@ -273,7 +288,7 @@ The repository follows these rules:
 - source code, identifiers, comments, UI strings, technical documentation,
   and commit messages use American English
 
-## 10. Chapter 12 automated quality gate
+## 11. Chapter 12 automated quality gate
 
 Chapter 12 replaces the earlier basic verification checklist with a repeatable
 release gate.
@@ -309,7 +324,7 @@ prevents a later publish from being mistaken for an approved release.
 The current Chapter 12 suite contains 26 tests and has been validated with all
 26 passing.
 
-## 11. Health endpoints
+## 12. Health endpoints
 
 The application exposes two health endpoints:
 
@@ -325,7 +340,7 @@ readiness only when the configured database can be reached.
 These endpoints are intentionally available without business authentication so
 deployment infrastructure can probe application state.
 
-## 12. Build the EF Core migration bundle
+## 13. Build the EF Core migration bundle
 
 For a Windows deployment artifact:
 
@@ -358,7 +373,7 @@ SQLite does not provide EF Core idempotent migration scripts, so the Book
 Edition uses the migration bundle as the repeatable deployment mechanism for
 schema updates instead of claiming idempotent-script support.
 
-## 13. Release artifact and deployment sequence
+## 14. Release artifact and deployment sequence
 
 A successful local release preparation produces:
 
@@ -381,7 +396,7 @@ A conservative deployment sequence is:
 Keep environment-specific configuration outside the repository and inject it
 through the hosting platform or another approved configuration mechanism.
 
-## 14. CI release gate
+## 15. CI release gate
 
 The repository contains:
 
