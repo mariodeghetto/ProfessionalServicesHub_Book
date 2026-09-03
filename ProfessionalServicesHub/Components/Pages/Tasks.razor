@@ -1,5 +1,6 @@
 @page "/tasks"
 @inject ActivityBoardService ActivityBoard
+@inject UiNotificationService Notifications
 @inject ILogger<Tasks> Logger
 
 <PageTitle>Tasks - Professional Services Hub</PageTitle>
@@ -199,6 +200,12 @@ else
             else
             {
                 BoardMessage = null;
+
+                await Notifications.PublishAsync(
+                    new UiNotification(
+                        "Task updated",
+                        $"'{item.Title}' moved to {target}.",
+                        UiNotificationKind.Success));
             }
         }
         catch (Exception ex)
