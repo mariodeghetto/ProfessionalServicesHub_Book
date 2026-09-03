@@ -100,15 +100,16 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 ```
 
 The current migrations create the client model, the Chapter 6
-`Engagements` and `WorkActivities` tables, and the Chapter 7
-`CalendarEntries` table with its foreign keys and indexes.
+`Engagements` and `WorkActivities` tables, the Chapter 7
+`CalendarEntries` table, and the Chapter 8 `Documents` table with its
+business relationships and indexes.
 
 The Development seed is intentionally separate from schema migration. It runs
 when the application starts, inserts deterministic sample clients only when
 the Clients table is empty, independently initializes the workflow slice with
 two sample engagements and five work activities, and finally creates two
 calendar appointments plus one all-day deadline when the CalendarEntries
-table is empty.
+table is empty. Documents are intentionally not seeded.
 
 ## 7. Run the application
 
@@ -120,7 +121,7 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 7 milestone, verify that:
+At the Chapter 8 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
 - the Chapter 6 Kanban workflow remains operational and persisted
@@ -137,7 +138,18 @@ At the Chapter 7 milestone, verify that:
 - deleting a calendar entry removes it permanently after refresh
 - overlapping timed appointments for the same assignee are rejected by the application service
 - invalid intervals with EndTime less than or equal to StartTime are rejected
-- no Syncfusion asset, license, Blazor, EF Core, Kanban, or Scheduler runtime error appears in the browser console or application log
+- no Syncfusion asset, license, Blazor, EF Core, Kanban, Scheduler, Uploader, DataGrid, or PDF Viewer runtime error appears in the browser console or application log
+- `/documents` opens and the document repository loads
+- a valid DOCX and a valid PDF below 20 MB can be uploaded
+- uploaded bytes are stored under `ProfessionalServicesHub/App_Data/documents`, never under `wwwroot`
+- uploaded documents appear in the grid with coherent metadata
+- a document associated with `ENG-001` displays `ENG-001` and `Alpine Design`, and the engagement filter limits the grid correctly
+- selecting a PDF loads it in Syncfusion PDF Viewer
+- Download returns the document with its original file name
+- Archive removes the document from the active repository without deleting the physical file
+- a non-allowed extension such as `.txt` is rejected before persistence
+- a renamed non-PDF file with a `.pdf` extension is rejected by server-side content validation
+- upload errors are displayed in the prominent status banner at the top of the page
 
 If the local HTTPS development certificate is not trusted, run:
 
@@ -157,14 +169,25 @@ Data/professionalserviceshub.db
 
 relative to the application project.
 
-The `Data` directory contains local runtime data.
+The `Data` directory contains local database runtime data.
 
-SQLite database files and their auxiliary files are excluded from Git:
+Chapter 8 document bytes are stored locally in:
+
+```text
+App_Data/documents
+```
+
+relative to the application project. This directory is private application
+storage and is not served as a static web asset.
+
+SQLite database files, their auxiliary files, and Chapter 8 document storage
+are excluded from Git:
 
 ```text
 *.db
 *.db-shm
 *.db-wal
+ProfessionalServicesHub/App_Data/
 ```
 
 Migration source files are versioned under:
