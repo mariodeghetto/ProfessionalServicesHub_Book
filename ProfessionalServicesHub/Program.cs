@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Calendar;
 using ProfessionalServicesHub.Application.Clients;
 using ProfessionalServicesHub.Application.Documents;
+using ProfessionalServicesHub.Application.Dashboard;
 using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
 using ProfessionalServicesHub.Infrastructure.Data;
@@ -45,6 +46,7 @@ builder.Services.AddScoped<ActivityBoardService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddSingleton<IDocumentStorage, LocalDocumentStorage>();
 builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<DashboardService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
