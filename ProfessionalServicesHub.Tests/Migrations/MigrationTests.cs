@@ -1,3 +1,4 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Infrastructure.Data;
 
@@ -8,41 +9,32 @@ public sealed class MigrationTests
     [Fact]
     public async Task Empty_database_migrates_to_latest_schema()
     {
-        var databasePath = Path.Combine(
-            Path.GetTempPath(),
-            $"psh-book-{Guid.NewGuid():N}.db");
+        await using var connection =
+            new SqliteConnection("Data Source=:memory:");
 
-        try
-        {
-            var options =
-                new DbContextOptionsBuilder<ApplicationDbContext>()
-                    .UseSqlite(
-                        $"Data Source={databasePath}")
-                    .Options;
+        await connection.OpenAsync(
+            TestContext.Current.CancellationToken);
 
-            await using var db =
-                new ApplicationDbContext(options);
+        var options =
+            new DbContextOptionsBuilder<ApplicationDbContext>()
+                .UseSqlite(connection)
+                .Options;
 
-            await db.Database.MigrateAsync(
+        await using var db =
+            new ApplicationDbContext(options);
+
+        await db.Database.MigrateAsync(
+            TestContext.Current.CancellationToken);
+
+        var applied =
+            await db.Database.GetAppliedMigrationsAsync(
                 TestContext.Current.CancellationToken);
 
-            var applied =
-                await db.Database.GetAppliedMigrationsAsync(
-                    TestContext.Current.CancellationToken);
-
-            Assert.Contains(
-                applied,
-                migration =>
-                    migration.EndsWith(
-                        "AddIdentityAndAccessScope",
-                        StringComparison.Ordinal));
-        }
-        finally
-        {
-            if (File.Exists(databasePath))
-            {
-                File.Delete(databasePath);
-            }
-        }
+        Assert.Contains(
+            applied,
+            migration =>
+                migration.EndsWith(
+                    "AddIdentityAndAccessScope",
+                    StringComparison.Ordinal));
     }
 }
