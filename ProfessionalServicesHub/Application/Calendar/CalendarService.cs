@@ -159,7 +159,7 @@ public sealed class CalendarService(
         return new(CalendarWriteStatus.Success);
     }
 
-    private static Task<string?> NormalizeAndValidateAsync(
+    private static string? NormalizeAndValidate(
         ScheduleItem item)
     {
         item.Subject = item.Subject.Trim();
@@ -192,7 +192,7 @@ public sealed class CalendarService(
                 "End time must be later than start time.");
         }
 
-        return Task.FromResult<string?>(null);
+        return null;
     }
 
     private static string? NormalizeOptional(string? value)
