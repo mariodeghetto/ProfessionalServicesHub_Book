@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using ProfessionalServicesHub.Infrastructure.Data;
@@ -14,12 +15,21 @@ public sealed class TestWebApplicationFactory
             Path.GetTempPath(),
             $"psh-web-{Guid.NewGuid():N}.db");
 
+    private readonly string _connectionString;
+
     public TestWebApplicationFactory()
     {
+        _connectionString =
+            new SqliteConnectionStringBuilder
+            {
+                DataSource = _databasePath,
+                Pooling = false
+            }
+            .ToString();
+
         var options =
             new DbContextOptionsBuilder<ApplicationDbContext>()
-                .UseSqlite(
-                    $"Data Source={_databasePath}")
+                .UseSqlite(_connectionString)
                 .Options;
 
         using var db =
@@ -40,7 +50,7 @@ public sealed class TestWebApplicationFactory
                     new Dictionary<string, string?>
                     {
                         ["ConnectionStrings:ProfessionalServicesHub"] =
-                            $"Data Source={_databasePath}",
+                            _connectionString,
                         ["Syncfusion:LicenseKey"] =
                             "TEST-LICENSE-KEY"
                     });
@@ -49,6 +59,8 @@ public sealed class TestWebApplicationFactory
 
     public void DeleteDatabase()
     {
+        SqliteConnection.ClearAllPools();
+
         if (File.Exists(_databasePath))
         {
             File.Delete(_databasePath);
