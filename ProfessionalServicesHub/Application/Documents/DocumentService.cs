@@ -34,6 +34,16 @@ public sealed class DocumentService(
                 [".jpeg"] = "image/jpeg"
             };
 
+    public static bool IsAllowedFileName(string fileName)
+    {
+        var safeFileName = Path.GetFileName(fileName);
+        return !string.IsNullOrWhiteSpace(safeFileName) &&
+            AllowedExtensions.Contains(Path.GetExtension(safeFileName));
+    }
+
+    public static bool IsAllowedFileSize(long sizeBytes) =>
+        sizeBytes > 0 && sizeBytes <= MaxFileSizeBytes;
+
     public async Task<List<EngagementDocumentOption>> GetEngagementOptionsAsync(
         CancellationToken cancellationToken = default)
     {
@@ -112,14 +122,13 @@ public sealed class DocumentService(
         }
 
         var extension = Path.GetExtension(safeFileName);
-        if (!AllowedExtensions.Contains(extension))
+        if (!IsAllowedFileName(safeFileName))
         {
             throw new InvalidOperationException(
                 "This file type is not allowed.");
         }
 
-        if (declaredSizeBytes <= 0 ||
-            declaredSizeBytes > MaxFileSizeBytes)
+        if (!IsAllowedFileSize(declaredSizeBytes))
         {
             throw new InvalidOperationException(
                 "The file size is not valid.");
