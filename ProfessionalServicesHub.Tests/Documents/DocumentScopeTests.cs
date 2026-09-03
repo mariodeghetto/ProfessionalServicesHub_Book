@@ -64,16 +64,15 @@ public sealed class DocumentScopeTests
             seeded.FirstDocumentId,
             principal);
 
-        await using (result.Content)
-        {
-            Assert.Equal(
-                "scoped.pdf",
-                result.FileName);
+        await using var content = result.Content;
 
-            Assert.Equal(
-                "application/pdf",
-                result.ContentType);
-        }
+        Assert.Equal(
+            "scoped.pdf",
+            result.FileName);
+
+        Assert.Equal(
+            "application/pdf",
+            result.ContentType);
 
         Assert.Equal(
             1,
