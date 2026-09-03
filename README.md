@@ -85,7 +85,8 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 ```
 
 The current Book Edition milestone includes the application shell, complete
-client management, operational task workflow, and calendar scheduling. The
+client management, operational task workflow, calendar scheduling, and a
+private document repository. The
 Clients page uses a Syncfusion DataGrid for exploration and selection, while a
 reusable client editor supports creation and modification with Syncfusion
 inputs, Blazor validation, database-backed duplicate-code checks, unsaved-change
@@ -108,6 +109,17 @@ resizing, creation, editing, and deletion, and rejects overlapping timed
 appointments for the same assignee. All-day deadlines use a compact two-line
 template so the subject and entry type remain readable in the all-day band.
 
+The Documents page combines Syncfusion File Upload, DataGrid, and PDF Viewer
+with an application service and a private storage abstraction. Document bytes
+are stored under `App_Data/documents`, outside `wwwroot`, while business
+metadata is stored in SQLite. Uploads are limited to PDF, DOCX, XLSX, PNG, and
+JPG files up to 20 MB. The application validates extension, actual byte count,
+basic file signatures, and OOXML package structure, calculates SHA-256, and
+uses compensating cleanup if metadata persistence fails. The repository can
+be filtered by engagement, PDFs can be previewed without exposing the storage
+key, downloads resolve by business document ID, and archiving removes a
+document from active views without deleting its physical file.
+
 ## Local database
 
 The Book Edition uses SQLite as its default development database.
@@ -118,8 +130,9 @@ The configured path is:
 ProfessionalServicesHub/Data/professionalserviceshub.db
 ```
 
-Runtime database files are excluded from Git. The EF Core migration files are
-versioned in:
+Runtime database files and private document content under
+`ProfessionalServicesHub/App_Data` are excluded from Git. The EF Core
+migration files are versioned in:
 
 ```text
 ProfessionalServicesHub/Infrastructure/Data/Migrations
@@ -136,7 +149,8 @@ In Development, deterministic client seed data is inserted only when the
 Clients table is empty. The workflow seed independently creates two sample
 engagements and five work activities when the corresponding workflow tables
 are empty. The calendar seed then adds two appointments and one all-day
-deadline when the CalendarEntries table is empty.
+deadline when the CalendarEntries table is empty. The document repository is
+not seeded; Chapter 8 verification uses real local uploads.
 
 ## Client form validation
 
