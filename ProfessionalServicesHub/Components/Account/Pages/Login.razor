@@ -2,6 +2,7 @@
 @attribute [AllowAnonymous]
 @layout AccountLayout
 @using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
@@ -21,11 +22,10 @@
     </div>
 }
 
-<EditForm Model="Input"
+<EditForm EditContext="EditContext"
           method="post"
-          OnValidSubmit="LoginAsync"
+          OnSubmit="LoginAsync"
           FormName="login">
-    <AntiforgeryToken />
     <DataAnnotationsValidator />
     <ValidationSummary />
 
@@ -61,6 +61,11 @@
 </EditForm>
 
 @code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    private EditContext EditContext { get; set; } = default!;
+
     [SupplyParameterFromQuery(Name = "returnUrl")]
     private string? ReturnUrl { get; set; }
 
@@ -69,14 +74,26 @@
 
     private string? ErrorMessage { get; set; }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         Input ??= new LoginInput();
+        EditContext = new EditContext(Input);
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            await HttpContext.SignOutAsync(
+                IdentityConstants.ExternalScheme);
+        }
     }
 
     private async Task LoginAsync()
     {
         ErrorMessage = null;
+
+        if (!await EditContext.ValidateAsync())
+        {
+            return;
+        }
 
         var result = await SignInManager.PasswordSignInAsync(
             Input!.Email,
