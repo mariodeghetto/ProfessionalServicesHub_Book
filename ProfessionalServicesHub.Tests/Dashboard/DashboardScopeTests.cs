@@ -22,7 +22,8 @@ public sealed class DashboardScopeTests
 
         var snapshot = await service.LoadAsync(
             DateTime.Today.AddHours(12),
-            DateTime.UtcNow);
+            DateTime.UtcNow,
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(
             1,
