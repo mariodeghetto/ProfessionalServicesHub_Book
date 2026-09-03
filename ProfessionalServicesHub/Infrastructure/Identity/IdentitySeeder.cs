@@ -1,5 +1,8 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Security;
+using ProfessionalServicesHub.Domain.Work;
+using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Infrastructure.Identity;
 
@@ -39,20 +42,43 @@ public static class IdentitySeeder
             return;
         }
 
-        var email =
-            configuration["DemoIdentity:AdministratorEmail"];
+        var userManager = scope.ServiceProvider
+            .GetRequiredService<UserManager<ApplicationUser>>();
 
-        var password =
-            configuration["DemoIdentity:AdministratorPassword"];
+        await EnsureDemoUserAsync(
+            userManager,
+            configuration["DemoIdentity:AdministratorEmail"],
+            configuration["DemoIdentity:AdministratorPassword"],
+            "Demo Administrator",
+            AppRoles.Administrator);
 
+        var collaborator = await EnsureDemoUserAsync(
+            userManager,
+            configuration["DemoIdentity:CollaboratorEmail"],
+            configuration["DemoIdentity:CollaboratorPassword"],
+            "Demo Collaborator",
+            AppRoles.Collaborator);
+
+        if (collaborator is not null)
+        {
+            await EnsureCollaboratorAssignmentAsync(
+                scope.ServiceProvider,
+                collaborator.Id);
+        }
+    }
+
+    private static async Task<ApplicationUser?> EnsureDemoUserAsync(
+        UserManager<ApplicationUser> userManager,
+        string? email,
+        string? password,
+        string displayName,
+        string role)
+    {
         if (string.IsNullOrWhiteSpace(email) ||
             string.IsNullOrWhiteSpace(password))
         {
-            return;
+            return null;
         }
-
-        var userManager = scope.ServiceProvider
-            .GetRequiredService<UserManager<ApplicationUser>>();
 
         var user = await userManager.FindByEmailAsync(email);
 
@@ -62,7 +88,7 @@ public static class IdentitySeeder
             {
                 UserName = email,
                 Email = email,
-                DisplayName = "Demo Administrator"
+                DisplayName = displayName
             };
 
             var created =
@@ -71,26 +97,66 @@ public static class IdentitySeeder
             if (!created.Succeeded)
             {
                 throw new InvalidOperationException(
-                    "Unable to provision the demo administrator: " +
+                    $"Unable to provision '{email}': " +
                     FormatErrors(created.Errors));
             }
         }
 
-        if (!await userManager.IsInRoleAsync(
-                user,
-                AppRoles.Administrator))
+        if (!await userManager.IsInRoleAsync(user, role))
         {
             var added = await userManager.AddToRoleAsync(
                 user,
-                AppRoles.Administrator);
+                role);
 
             if (!added.Succeeded)
             {
                 throw new InvalidOperationException(
-                    "Unable to assign the Administrator role: " +
+                    $"Unable to assign role '{role}' to '{email}': " +
                     FormatErrors(added.Errors));
             }
         }
+
+        return user;
+    }
+
+    private static async Task EnsureCollaboratorAssignmentAsync(
+        IServiceProvider services,
+        string userId)
+    {
+        var factory = services
+            .GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
+
+        await using var db = await factory.CreateDbContextAsync();
+
+        var engagementId = await db.Engagements
+            .Where(engagement => engagement.Code == "ENG-001")
+            .Select(engagement => (int?)engagement.Id)
+            .SingleOrDefaultAsync();
+
+        if (engagementId is null)
+        {
+            return;
+        }
+
+        var exists = await db.EngagementAssignments
+            .AnyAsync(assignment =>
+                assignment.EngagementId == engagementId.Value &&
+                assignment.UserId == userId);
+
+        if (exists)
+        {
+            return;
+        }
+
+        db.EngagementAssignments.Add(
+            new EngagementAssignment
+            {
+                EngagementId = engagementId.Value,
+                UserId = userId,
+                Kind = AssignmentKind.Collaborator
+            });
+
+        await db.SaveChangesAsync();
     }
 
     private static string FormatErrors(
