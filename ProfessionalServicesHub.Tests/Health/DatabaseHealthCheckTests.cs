@@ -19,7 +19,8 @@ public sealed class DatabaseHealthCheckTests
                 database.Factory);
 
         var result = await check.CheckHealthAsync(
-            new HealthCheckContext());
+            new HealthCheckContext(),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(
             HealthStatus.Healthy,
@@ -34,7 +35,8 @@ public sealed class DatabaseHealthCheckTests
                 new ThrowingDbContextFactory());
 
         var result = await check.CheckHealthAsync(
-            new HealthCheckContext());
+            new HealthCheckContext(),
+            TestContext.Current.CancellationToken);
 
         Assert.Equal(
             HealthStatus.Unhealthy,
