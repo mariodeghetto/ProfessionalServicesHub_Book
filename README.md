@@ -85,8 +85,8 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 ```
 
 The current Book Edition milestone includes the application shell, complete
-client management, operational task workflow, calendar scheduling, and a
-private document repository. The
+client management, operational task workflow, calendar scheduling, a private
+document repository, and an operational dashboard. The
 Clients page uses a Syncfusion DataGrid for exploration and selection, while a
 reusable client editor supports creation and modification with Syncfusion
 inputs, Blazor validation, database-backed duplicate-code checks, unsaved-change
@@ -119,6 +119,15 @@ uses compensating cleanup if metadata persistence fails. The repository can
 be filtered by engagement, PDFs can be previewed without exposing the storage
 key, downloads resolve by business document ID, and archiving removes a
 document from active views without deleting its physical file.
+
+The root route now hosts an operational dashboard backed by a dedicated
+`DashboardSnapshot` read model and `DashboardService`. Entity Framework Core
+queries calculate open-work KPIs, overdue activities, upcoming deadlines,
+recent documents, workflow-state counts, a fourteen-day deadline trend, and
+open activities by assignee. Syncfusion Charts renders column, line, and
+accumulation visualizations, while KPI cards remain lightweight HTML and CSS.
+The dashboard supports manual refresh with a visible completion timestamp and
+uses a responsive layout that collapses charts before they become cramped.
 
 ## Local database
 
@@ -171,7 +180,8 @@ Package versions are managed centrally through:
 Directory.Packages.props
 ```
 
-All Syncfusion packages must use the same Syncfusion release.
+All Syncfusion packages must use the same Syncfusion release. Chapter 9 adds
+`Syncfusion.Blazor.Charts` for the operational dashboard visualizations.
 
 ## License
 
