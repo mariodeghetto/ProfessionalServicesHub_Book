@@ -1,13 +1,20 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Calendar;
 using ProfessionalServicesHub.Application.Clients;
 using ProfessionalServicesHub.Application.Documents;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Application.Dashboard;
 using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
+using ProfessionalServicesHub.Components.Account;
+using ProfessionalServicesHub.Components.Security;
 using ProfessionalServicesHub.Components.Services;
 using ProfessionalServicesHub.Infrastructure.Data;
 using ProfessionalServicesHub.Infrastructure.Documents;
+using ProfessionalServicesHub.Infrastructure.Identity;
 using Syncfusion.Blazor;
 using Syncfusion.Blazor.Popups;
 using Syncfusion.Licensing;
@@ -42,9 +49,56 @@ builder.Services.AddSyncfusionBlazor();
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
 
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider,
+    IdentityRevalidatingAuthenticationStateProvider>();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+    options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+})
+.AddIdentityCookies();
+
+builder.Services
+    .AddIdentityCore<ApplicationUser>(options =>
+    {
+        options.User.RequireUniqueEmail = true;
+        options.SignIn.RequireConfirmedAccount = false;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddSignInManager();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/account/login";
+    options.AccessDeniedPath = "/account/access-denied";
+});
+
+builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(
+        AppPolicies.ManageConfiguration,
+        policy => policy.RequireRole(AppRoles.Administrator))
+    .AddPolicy(
+        AppPolicies.DispatchWork,
+        policy => policy.RequireRole(
+            AppRoles.Administrator,
+            AppRoles.Coordinator))
+    .AddPolicy(
+        AppPolicies.ManageClients,
+        policy => policy.RequireRole(
+            AppRoles.Administrator,
+            AppRoles.Coordinator));
+
+builder.Services.AddScoped<ICurrentUserAccessor,
+    BlazorCurrentUserAccessor>();
+builder.Services.AddScoped<EngagementAccessService>();
+
 builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
 builder.Services.AddScoped<ClientLookupService>();
+builder.Services.AddScoped<EngagementQueryService>();
 builder.Services.AddScoped<ActivityBoardService>();
 builder.Services.AddScoped<CalendarService>();
 builder.Services.AddSingleton<IDocumentStorage, LocalDocumentStorage>();
@@ -69,6 +123,11 @@ if (app.Environment.IsDevelopment())
     await DevelopmentDataSeeder.SeedCalendarAsync(factory);
 }
 
+await IdentitySeeder.EnsureIdentityAsync(
+    app.Services,
+    app.Configuration,
+    app.Environment);
+
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
@@ -82,13 +141,17 @@ app.UseStatusCodePagesWithReExecute(
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 
 app.MapGet(
     "/documents/{documentId:int}/download",
-    DownloadDocumentAsync);
+    DownloadDocumentAsync)
+    .RequireAuthorization();
 
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
@@ -97,6 +160,7 @@ app.Run();
 
 static async Task<IResult> DownloadDocumentAsync(
     int documentId,
+    ClaimsPrincipal principal,
     DocumentService documentService,
     CancellationToken cancellationToken)
 {
@@ -104,6 +168,7 @@ static async Task<IResult> DownloadDocumentAsync(
     {
         var download = await documentService.GetDownloadAsync(
             documentId,
+            principal,
             cancellationToken);
 
         return Results.Stream(

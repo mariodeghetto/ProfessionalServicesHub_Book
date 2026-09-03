@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Domain.Clients;
 using ProfessionalServicesHub.Infrastructure.Data;
 
@@ -8,7 +9,8 @@ public enum SaveClientStatus
 {
     Success,
     DuplicateCode,
-    NotFound
+    NotFound,
+    Forbidden
 }
 
 public sealed record SaveClientResult(
@@ -16,10 +18,18 @@ public sealed record SaveClientResult(
     int? ClientId = null);
 
 public sealed class ClientCommandService(
-    IDbContextFactory<ApplicationDbContext> contextFactory)
+    IDbContextFactory<ApplicationDbContext> contextFactory,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<ClientEditModel?> GetForEditAsync(int id)
     {
+        var user = await currentUserAccessor.GetAsync();
+
+        if (!EngagementScope.HasGlobalOperationalScope(user))
+        {
+            return null;
+        }
+
         await using var db = await contextFactory.CreateDbContextAsync();
 
         return await db.Clients
@@ -39,6 +49,14 @@ public sealed class ClientCommandService(
 
     public async Task<SaveClientResult> SaveAsync(ClientEditModel model)
     {
+        var user = await currentUserAccessor.GetAsync();
+
+        if (!EngagementScope.HasGlobalOperationalScope(user))
+        {
+            return new SaveClientResult(
+                SaveClientStatus.Forbidden);
+        }
+
         await using var db = await contextFactory.CreateDbContextAsync();
 
         var normalizedCode = model.Code.Trim().ToUpperInvariant();

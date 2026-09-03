@@ -102,9 +102,10 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 The current migrations create the client model, the Chapter 6
 `Engagements` and `WorkActivities` tables, the Chapter 7
 `CalendarEntries` table, and the Chapter 8 `Documents` table with its
-business relationships and indexes. Chapters 9 and 10 add no schema changes
-or new migrations; the dashboard and UX improvements read and operate on the
-existing model.
+business relationships and indexes. Chapters 9 and 10 add no schema changes.
+Chapter 11 adds migration `20260903193000_AddIdentityAndAccessScope`, which
+creates the standard ASP.NET Core Identity tables and
+`EngagementAssignments` while preserving the existing business tables.
 
 The Development seed is intentionally separate from schema migration. It runs
 when the application starts, inserts deterministic sample clients only when
@@ -115,6 +116,29 @@ table is empty. Documents are intentionally not seeded.
 
 ## 7. Run the application
 
+### 7.1 Configure development identities
+
+Chapter 11 does not commit demo passwords. To provision a local Administrator,
+store the credentials in .NET User Secrets:
+
+```text
+dotnet user-secrets set --project ProfessionalServicesHub "DemoIdentity:AdministratorEmail" "admin@example.com"
+dotnet user-secrets set --project ProfessionalServicesHub "DemoIdentity:AdministratorPassword" "YOUR_LOCAL_PASSWORD"
+```
+
+To exercise data scope, optionally provision a Collaborator:
+
+```text
+dotnet user-secrets set --project ProfessionalServicesHub "DemoIdentity:CollaboratorEmail" "collaborator@example.com"
+dotnet user-secrets set --project ProfessionalServicesHub "DemoIdentity:CollaboratorPassword" "YOUR_LOCAL_PASSWORD"
+```
+
+On Development startup the roles Administrator, Coordinator, and Collaborator
+are ensured. When collaborator credentials are present, the demo Collaborator
+is assigned to `ENG-001` with `AssignmentKind.Collaborator`.
+
+### 7.2 Start the application
+
 Use the HTTPS launch profile:
 
 ```text
@@ -123,7 +147,7 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 10 milestone, verify that:
+At the Chapter 11 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
 - the Chapter 6 Kanban workflow remains operational and persisted
@@ -171,6 +195,22 @@ At the Chapter 10 milestone, verify that:
 - a successful Kanban workflow transition publishes a toast and concurrent duplicate moves are prevented in the UI
 - one global toast host and one dialog provider serve the interactive layout
 - no Syncfusion Notifications, Popups, Spinner, AutoComplete, Blazor, or EF Core runtime error appears in the browser console or application log
+- an anonymous request to `/` is redirected to `/account/login`
+- the Account routes render in static SSR and successful sign-in issues the Identity cookie
+- the application shell displays the authenticated user and exposes Sign out
+- Administrator can access all seeded clients, engagements, tasks, calendar entries, documents, and dashboard data
+- the optional Collaborator account is assigned only to `ENG-001`
+- Collaborator sees only `ENG-001` in Engagements
+- Collaborator sees only tasks and calendar entries linked to `ENG-001`
+- Collaborator sees only clients reachable through visible engagements
+- Collaborator cannot open the client editor or use client-management actions
+- Collaborator sees only documents in visible engagements and cannot download out-of-scope document content
+- Collaborator dashboard KPIs and charts are calculated only from visible data
+- Collaborator may modify scoped resources only when the assignment is not Observer
+- general calendar entries and general documents remain outside Collaborator scope in the current sample
+- logout ends the session and protected business routes require sign-in again
+- `dotnet ef migrations has-pending-model-changes` reports no pending model changes after the Chapter 11 migration
+- no Identity, authorization, antiforgery, Blazor, EF Core, or Syncfusion runtime error appears during the Administrator and Collaborator smoke tests
 
 If the local HTTPS development certificate is not trusted, run:
 

@@ -9,7 +9,18 @@
 
         <div class="app-brand">Professional Services Hub</div>
         <div class="app-header-spacer"></div>
-        <div class="app-user-context">Demo user</div>
+
+        <AuthorizeView>
+            <Authorized Context="authentication">
+                <div class="app-user-context">
+                    @authentication.User.Identity?.Name
+                </div>
+                <a class="btn btn-sm btn-outline-secondary"
+                   href="/account/logout">
+                    Sign out
+                </a>
+            </Authorized>
+        </AuthorizeView>
     </header>
 
     <SfSidebar Width="260px"

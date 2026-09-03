@@ -1,14 +1,18 @@
 using System.IO.Compression;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Domain.Documents;
+using ProfessionalServicesHub.Domain.Work;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Application.Documents;
 
 public sealed class DocumentService(
     IDbContextFactory<ApplicationDbContext> dbFactory,
-    IDocumentStorage storage)
+    IDocumentStorage storage,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public const long MaxFileSizeBytes = 20 * 1024 * 1024;
     public const string AllowedExtensionsCsv =
@@ -47,11 +51,14 @@ public sealed class DocumentService(
     public async Task<List<EngagementDocumentOption>> GetEngagementOptionsAsync(
         CancellationToken cancellationToken = default)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var items = await db.Engagements
             .AsNoTracking()
+            .VisibleTo(db, user)
             .OrderBy(x => x.Code)
             .Select(x => new
             {
@@ -73,11 +80,14 @@ public sealed class DocumentService(
         int? engagementId = null,
         CancellationToken cancellationToken = default)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var query = db.Documents
             .AsNoTracking()
+            .VisibleTo(db, user)
             .Where(x => !x.IsArchived);
 
         if (engagementId is int selectedEngagementId)
@@ -167,6 +177,8 @@ public sealed class DocumentService(
             extension,
             declaredContentType);
 
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
@@ -174,17 +186,49 @@ public sealed class DocumentService(
 
         if (engagementId is int selectedEngagementId)
         {
-            clientId = await db.Engagements
+            var engagement = await db.Engagements
                 .AsNoTracking()
+                .VisibleTo(db, user)
                 .Where(x => x.Id == selectedEngagementId)
-                .Select(x => (int?)x.ClientId)
+                .Select(x => new
+                {
+                    x.Id,
+                    x.ClientId
+                })
                 .SingleOrDefaultAsync(cancellationToken);
 
-            if (clientId is null)
+            if (engagement is null)
             {
                 throw new InvalidOperationException(
                     "The selected engagement is not available.");
             }
+
+            if (!EngagementScope.HasGlobalOperationalScope(user))
+            {
+                var canEdit = await db.EngagementAssignments
+                    .AsNoTracking()
+                    .AnyAsync(
+                        assignment =>
+                            assignment.EngagementId ==
+                                selectedEngagementId &&
+                            assignment.UserId == user.Id &&
+                            assignment.Kind !=
+                                AssignmentKind.Observer,
+                        cancellationToken);
+
+                if (!canEdit)
+                {
+                    throw new InvalidOperationException(
+                        "You do not have permission to add documents to this engagement.");
+                }
+            }
+
+            clientId = engagement.ClientId;
+        }
+        else if (!EngagementScope.HasGlobalOperationalScope(user))
+        {
+            throw new InvalidOperationException(
+                "You do not have permission to add general documents.");
         }
 
         buffered.Position = 0;
@@ -226,11 +270,14 @@ public sealed class DocumentService(
         int documentId,
         CancellationToken cancellationToken = default)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var storageKey = await db.Documents
             .AsNoTracking()
+            .VisibleTo(db, user)
             .Where(x => x.Id == documentId && !x.IsArchived)
             .Select(x => x.StorageKey)
             .SingleOrDefaultAsync(cancellationToken);
@@ -248,13 +295,28 @@ public sealed class DocumentService(
 
     public async Task<DocumentDownload> GetDownloadAsync(
         int documentId,
+        ClaimsPrincipal principal,
         CancellationToken cancellationToken = default)
+    {
+        var user = CurrentUser.FromPrincipal(principal);
+
+        return await GetDownloadForUserAsync(
+            documentId,
+            user,
+            cancellationToken);
+    }
+
+    private async Task<DocumentDownload> GetDownloadForUserAsync(
+        int documentId,
+        CurrentUser user,
+        CancellationToken cancellationToken)
     {
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
 
         var document = await db.Documents
             .AsNoTracking()
+            .VisibleTo(db, user)
             .Where(x => x.Id == documentId && !x.IsArchived)
             .Select(x => new
             {
@@ -284,8 +346,50 @@ public sealed class DocumentService(
         int documentId,
         CancellationToken cancellationToken = default)
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db =
             await dbFactory.CreateDbContextAsync(cancellationToken);
+
+        var document = await db.Documents
+            .AsNoTracking()
+            .VisibleTo(db, user)
+            .Where(x => x.Id == documentId && !x.IsArchived)
+            .Select(x => new
+            {
+                x.Id,
+                x.EngagementId
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (document is null)
+        {
+            return false;
+        }
+
+        if (!EngagementScope.HasGlobalOperationalScope(user))
+        {
+            if (document.EngagementId is not int engagementId)
+            {
+                return false;
+            }
+
+            var canEdit = await db.EngagementAssignments
+                .AsNoTracking()
+                .AnyAsync(
+                    assignment =>
+                        assignment.EngagementId == engagementId &&
+                        assignment.UserId == user.Id &&
+                        assignment.Kind !=
+                            AssignmentKind.Observer,
+                    cancellationToken);
+
+            if (!canEdit)
+            {
+                throw new UnauthorizedAccessException(
+                    "You do not have permission to archive this document.");
+            }
+        }
 
         var affected = await db.Documents
             .Where(x => x.Id == documentId && !x.IsArchived)

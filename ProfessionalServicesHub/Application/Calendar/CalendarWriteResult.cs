@@ -5,7 +5,8 @@ public enum CalendarWriteStatus
     Success,
     ValidationFailed,
     NotFound,
-    Conflict
+    Conflict,
+    Forbidden
 }
 
 public sealed record CalendarWriteResult(

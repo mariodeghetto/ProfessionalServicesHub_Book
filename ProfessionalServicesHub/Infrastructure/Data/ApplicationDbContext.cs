@@ -1,13 +1,15 @@
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Domain.Calendar;
 using ProfessionalServicesHub.Domain.Clients;
 using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Domain.Work;
+using ProfessionalServicesHub.Infrastructure.Identity;
 
 namespace ProfessionalServicesHub.Infrastructure.Data;
 
 public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
-    : DbContext(options)
+    : IdentityDbContext<ApplicationUser>(options)
 {
     public DbSet<Client> Clients => Set<Client>();
 
@@ -19,8 +21,17 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
 
     public DbSet<BusinessDocument> Documents => Set<BusinessDocument>();
 
+    public DbSet<EngagementAssignment> EngagementAssignments =>
+        Set<EngagementAssignment>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<ApplicationUser>()
+            .Property(x => x.DisplayName)
+            .HasMaxLength(160);
+
         var client = modelBuilder.Entity<Client>();
 
         client.Property(x => x.Code)
@@ -163,5 +174,28 @@ public sealed class ApplicationDbContext(DbContextOptions<ApplicationDbContext> 
             .HasForeignKey(x => x.WorkActivityId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        var assignment = modelBuilder.Entity<EngagementAssignment>();
+
+        assignment.HasKey(x => new
+        {
+            x.EngagementId,
+            x.UserId
+        });
+
+        assignment.Property(x => x.UserId)
+            .HasMaxLength(450)
+            .IsRequired();
+
+        assignment.HasIndex(x => x.UserId);
+
+        assignment.HasOne<Engagement>()
+            .WithMany()
+            .HasForeignKey(x => x.EngagementId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        assignment.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

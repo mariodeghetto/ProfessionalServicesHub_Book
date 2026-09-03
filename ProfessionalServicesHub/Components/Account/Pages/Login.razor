@@ -1,0 +1,134 @@
+@page "/account/login"
+@attribute [AllowAnonymous]
+@layout AccountLayout
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Authentication
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+
+<PageTitle>Sign in - Professional Services Hub</PageTitle>
+
+<h1 class="h3">Sign in</h1>
+<p class="text-secondary">
+    Use an account provisioned for this Professional Services Hub instance.
+</p>
+
+@if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @ErrorMessage
+    </div>
+}
+
+<EditForm Model="Input"
+          method="post"
+          OnValidSubmit="LoginAsync"
+          FormName="login">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label for="login-email" class="form-label">Email</label>
+        <InputText id="login-email"
+                   class="form-control"
+                   @bind-Value="Input!.Email"
+                   autocomplete="username" />
+    </div>
+
+    <div class="mb-3">
+        <label for="login-password" class="form-label">Password</label>
+        <InputText id="login-password"
+                   class="form-control"
+                   @bind-Value="Input!.Password"
+                   type="password"
+                   autocomplete="current-password" />
+    </div>
+
+    <div class="form-check mb-3">
+        <InputCheckbox id="login-remember"
+                       class="form-check-input"
+                       @bind-Value="Input!.RememberMe" />
+        <label for="login-remember" class="form-check-label">
+            Remember me
+        </label>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Sign in
+    </button>
+</EditForm>
+
+@code {
+    [CascadingParameter]
+    private HttpContext HttpContext { get; set; } = default!;
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    private string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromForm]
+    private LoginInput? Input { get; set; }
+
+    private string? ErrorMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Input ??= new LoginInput();
+
+        if (HttpMethods.IsGet(HttpContext.Request.Method))
+        {
+            await HttpContext.SignOutAsync(
+                IdentityConstants.ExternalScheme);
+        }
+    }
+
+    private async Task LoginAsync()
+    {
+        ErrorMessage = null;
+
+        var result = await SignInManager.PasswordSignInAsync(
+            Input!.Email,
+            Input!.Password,
+            Input!.RememberMe,
+            lockoutOnFailure: true);
+
+        if (!result.Succeeded)
+        {
+            ErrorMessage =
+                "Sign-in failed. Check your credentials and try again.";
+            return;
+        }
+
+        var target = GetSafeReturnUrl(ReturnUrl);
+
+        Navigation.NavigateTo(
+            target,
+            forceLoad: true);
+    }
+
+    private static string GetSafeReturnUrl(string? returnUrl)
+    {
+        if (string.IsNullOrWhiteSpace(returnUrl) ||
+            !returnUrl.StartsWith("/", StringComparison.Ordinal) ||
+            returnUrl.StartsWith("//", StringComparison.Ordinal))
+        {
+            return "/";
+        }
+
+        return returnUrl;
+    }
+
+    private sealed class LoginInput
+    {
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
+
+        [Required]
+        [DataType(DataType.Password)]
+        public string Password { get; set; } = string.Empty;
+
+        public bool RememberMe { get; set; }
+    }
+}

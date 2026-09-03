@@ -1,11 +1,77 @@
 @page "/engagements"
+@inject EngagementQueryService EngagementQueries
+@inject ILogger<Engagements> Logger
 
 <PageTitle>Engagements - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Engagements"
-            Subtitle="Track professional engagements, ownership, dates, and client relationships." />
+            Subtitle="Professional engagements visible to your current access scope." />
 
-<p>
-    Engagement data is already used by the task workflow.
-    Full engagement management will be implemented in a later chapter.
-</p>
+@if (IsLoading)
+{
+    <p role="status">Loading engagements...</p>
+}
+else if (!string.IsNullOrWhiteSpace(LoadError))
+{
+    <div class="alert alert-danger" role="alert">
+        @LoadError
+    </div>
+}
+else if (Items.Count == 0)
+{
+    <p>No engagements are available in your current scope.</p>
+}
+else
+{
+    <SfGrid DataSource="@Items"
+            AllowSorting="true"
+            AllowFiltering="true"
+            AllowPaging="true">
+        <GridPageSettings PageSize="10" />
+
+        <GridColumns>
+            <GridColumn Field="@nameof(EngagementListItem.Code)"
+                        HeaderText="Code"
+                        Width="120" />
+            <GridColumn Field="@nameof(EngagementListItem.Title)"
+                        HeaderText="Engagement"
+                        Width="260" />
+            <GridColumn Field="@nameof(EngagementListItem.ClientName)"
+                        HeaderText="Client"
+                        Width="220" />
+        </GridColumns>
+    </SfGrid>
+}
+
+@code {
+    private List<EngagementListItem> Items { get; set; } = [];
+
+    private bool IsLoading { get; set; }
+
+    private string? LoadError { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            LoadError = null;
+
+            Items = await EngagementQueries.GetVisibleAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to load visible engagements.");
+
+            Items = [];
+            LoadError =
+                "Unable to load engagements. Please try again later.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

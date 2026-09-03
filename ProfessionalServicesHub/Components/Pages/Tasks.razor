@@ -211,6 +211,8 @@ else
                         "The task was changed by another operation. The board has been refreshed.",
                     WorkflowMoveResult.NotFound =>
                         "The task is no longer available.",
+                    WorkflowMoveResult.Forbidden =>
+                        "You do not have permission to update this task.",
                     _ => "Unable to update the task."
                 };
             }
