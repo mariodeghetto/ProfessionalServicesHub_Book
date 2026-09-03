@@ -85,10 +85,10 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 ```
 
 The current Book Edition milestone includes the application shell, complete
-client management, and the first operational workflow slice. The Clients page
-uses a Syncfusion DataGrid for exploration and selection, while a reusable
-client editor supports creation and modification with Syncfusion inputs,
-Blazor validation, database-backed duplicate-code checks, unsaved-change
+client management, operational task workflow, and calendar scheduling. The
+Clients page uses a Syncfusion DataGrid for exploration and selection, while a
+reusable client editor supports creation and modification with Syncfusion
+inputs, Blazor validation, database-backed duplicate-code checks, unsaved-change
 protection, and explicit loading and error states.
 
 The Tasks page uses Syncfusion Kanban to project work activities across the
@@ -99,6 +99,14 @@ atomic state update is persisted. Reordering within one column is intentionally
 not persisted yet. The Engagements page remains a placeholder for the later
 engagement-management chapter, although engagement data is already part of the
 domain and task workflow.
+
+The Calendar page uses Syncfusion Scheduler with Day, Week, WorkWeek, Month,
+and Agenda views. Calendar entries are loaded by time range and persisted
+through an application service rather than directly by the component. The
+sample distinguishes appointments from deadlines, supports drag and drop,
+resizing, creation, editing, and deletion, and rejects overlapping timed
+appointments for the same assignee. All-day deadlines use a compact two-line
+template so the subject and entry type remain readable in the all-day band.
 
 ## Local database
 
@@ -127,7 +135,8 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 In Development, deterministic client seed data is inserted only when the
 Clients table is empty. The workflow seed independently creates two sample
 engagements and five work activities when the corresponding workflow tables
-are empty.
+are empty. The calendar seed then adds two appointments and one all-day
+deadline when the CalendarEntries table is empty.
 
 ## Client form validation
 
