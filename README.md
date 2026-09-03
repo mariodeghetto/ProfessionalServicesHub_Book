@@ -84,10 +84,11 @@ Use the HTTPS launch profile for local development:
 dotnet run --launch-profile https --project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
-The current Book Edition milestone includes the application shell, complete
-client management, operational task workflow, calendar scheduling, a private
-document repository, an operational dashboard, and a shared presentation
-experience layer for feedback, confirmation, lookup, and busy states. The
+The current Book Edition milestone includes the application shell, scoped
+client and engagement access, operational task workflow, calendar scheduling,
+a private document repository, an operational dashboard, shared presentation
+feedback patterns, and ASP.NET Core Identity-based authentication and
+authorization. The
 Clients page uses a Syncfusion DataGrid for exploration and selection, while a
 reusable client editor supports creation and modification with Syncfusion
 inputs, Blazor validation, database-backed duplicate-code checks, unsaved-change
@@ -140,6 +141,29 @@ secondary tooltip and success notifications, and successful Kanban transitions
 publish concise feedback. The Clients page also adds a server-side
 `SfAutoComplete` lookup with a two-character minimum, 300 ms debounce, a
 20-result limit, and cancellation of stale searches.
+
+Chapter 11 adds ASP.NET Core Identity to the existing EF Core persistence
+without introducing a second business DbContext. Business pages require an
+authenticated user by default, while the Account area remains in static SSR so
+login and logout can safely write Identity cookies. Administrator, Coordinator,
+and Collaborator roles are provisioned without repository secrets, and
+application policies represent global capabilities.
+
+Data visibility is enforced before materialization. `EngagementAssignment`
+links users to engagements, while reusable scope queries filter engagements,
+clients, work activities, calendar entries, documents, and dashboard
+aggregations. Administrator and Coordinator have global operational scope;
+Collaborator sees only assigned engagement data. Observer assignments remain
+readable but cannot modify scoped resources. Document metadata, preview,
+archive, upload, and HTTP download all apply the same access rules before
+opening private storage streams.
+
+Development provisioning is opt-in through .NET User Secrets. An Administrator
+can be created from `DemoIdentity:AdministratorEmail` and
+`DemoIdentity:AdministratorPassword`. A Collaborator can optionally be
+created from `DemoIdentity:CollaboratorEmail` and
+`DemoIdentity:CollaboratorPassword`; the development seed assigns that user
+to `ENG-001` as a Collaborator when the engagement exists.
 
 ## Local database
 
@@ -196,7 +220,9 @@ All Syncfusion packages must use the same Syncfusion release. Chapter 9 adds
 `Syncfusion.Blazor.Charts` for the operational dashboard visualizations.
 Chapter 10 adds `Syncfusion.Blazor.Notifications`,
 `Syncfusion.Blazor.Popups`, and `Syncfusion.Blazor.Spinner`; the existing
-DropDowns package is reused for `SfAutoComplete`.
+DropDowns package is reused for `SfAutoComplete`. Chapter 11 adds
+`Microsoft.AspNetCore.Identity.EntityFrameworkCore` 10.0.11 and keeps Identity
+on the same `ApplicationDbContext` used by the business model.
 
 ## License
 
