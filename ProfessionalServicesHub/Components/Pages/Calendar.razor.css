@@ -1,0 +1,22 @@
+.calendar-message {
+    margin-bottom: 1rem;
+}
+
+.schedule-entry {
+    display: grid;
+    gap: 0.15rem;
+    overflow: hidden;
+}
+
+.schedule-entry strong,
+.schedule-entry span,
+.schedule-entry small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.schedule-entry span,
+.schedule-entry small {
+    font-size: 0.8rem;
+}
