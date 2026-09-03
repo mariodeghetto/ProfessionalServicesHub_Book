@@ -1,0 +1,53 @@
+@implements IDisposable
+@inject UiNotificationService Notifications
+
+<SfToast @ref="Toast"
+         ShowCloseButton="true"
+         ShowProgressBar="true">
+    <ToastPosition X="Right"
+                   Y="Bottom" />
+</SfToast>
+
+@code {
+    private SfToast? Toast { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Notifications.Published += OnPublishedAsync;
+    }
+
+    private Task OnPublishedAsync(UiNotification notification) =>
+        InvokeAsync(() => ShowAsync(notification));
+
+    private async Task ShowAsync(UiNotification notification)
+    {
+        if (Toast is null)
+        {
+            return;
+        }
+
+        var cssClass = notification.Kind switch
+        {
+            UiNotificationKind.Success => "e-toast-success",
+            UiNotificationKind.Warning => "e-toast-warning",
+            UiNotificationKind.Error => "e-toast-danger",
+            _ => "e-toast-info"
+        };
+
+        await Toast.ShowAsync(
+            new ToastModel
+            {
+                Title = notification.Title,
+                Content = notification.Message,
+                Timeout = notification.Timeout,
+                CssClass = cssClass,
+                ShowCloseButton = true,
+                ShowProgressBar = true
+            });
+    }
+
+    public void Dispose()
+    {
+        Notifications.Published -= OnPublishedAsync;
+    }
+}
