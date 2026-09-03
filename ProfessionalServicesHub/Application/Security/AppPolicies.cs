@@ -7,4 +7,7 @@ public static class AppPolicies
 
     public const string DispatchWork =
         "DispatchWork";
+
+    public const string ManageClients =
+        "ManageClients";
 }
