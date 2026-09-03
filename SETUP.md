@@ -147,7 +147,7 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 11 milestone, verify that:
+At the Chapter 12 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
 - the Chapter 6 Kanban workflow remains operational and persisted
@@ -211,6 +211,10 @@ At the Chapter 11 milestone, verify that:
 - logout ends the session and protected business routes require sign-in again
 - `dotnet ef migrations has-pending-model-changes` reports no pending model changes after the Chapter 11 migration
 - no Identity, authorization, antiforgery, Blazor, EF Core, or Syncfusion runtime error appears during the Administrator and Collaborator smoke tests
+- `/health/live` returns HTTP 200 while the application process is healthy
+- `/health/ready` returns HTTP 200 when the application can connect to the configured database
+- an anonymous request to the protected document download endpoint is challenged by Identity
+- the automated Chapter 12 test suite completes with 26 of 26 tests passing
 
 If the local HTTPS development certificate is not trusted, run:
 
@@ -269,18 +273,125 @@ The repository follows these rules:
 - source code, identifiers, comments, UI strings, technical documentation,
   and commit messages use American English
 
-## 10. Basic local verification
+## 10. Chapter 12 automated quality gate
 
-Before committing a milestone, run:
+Chapter 12 replaces the earlier basic verification checklist with a repeatable
+release gate.
+
+From Windows PowerShell:
 
 ```text
-dotnet tool restore
-dotnet restore ProfessionalServicesHub_Book.slnx
-dotnet build ProfessionalServicesHub_Book.slnx -c Release --no-restore
-dotnet format ProfessionalServicesHub_Book.slnx --verify-no-changes
-git diff --check
-git status
+powershell -ExecutionPolicy Bypass -File .\scripts\quality-gate.ps1
 ```
 
-Later chapters extend this quality gate with automated tests, publishing, and
-additional smoke testing.
+From Bash:
+
+```text
+bash scripts/quality-gate.sh
+```
+
+The gate performs these steps in order:
+
+1. restores the local EF Core tool
+2. restores NuGet packages
+3. builds the complete solution in Release with warnings treated as errors
+4. runs the automated test suite through Microsoft Testing Platform
+5. writes a TRX report under `artifacts/test-results`
+6. verifies formatting with `dotnet format --verify-no-changes`
+7. runs `dotnet ef migrations has-pending-model-changes`
+8. publishes the application to `artifacts/publish`
+
+The Windows PowerShell script checks native-process exit codes explicitly so
+it remains fail-fast under Windows PowerShell 5.1. It also removes stale test
+and publish artifacts before execution. A failed test or build therefore
+prevents a later publish from being mistaken for an approved release.
+
+The current Chapter 12 suite contains 26 tests and has been validated with all
+26 passing.
+
+## 11. Health endpoints
+
+The application exposes two health endpoints:
+
+```text
+/health/live
+/health/ready
+```
+
+`/health/live` verifies application liveness without running dependency
+checks. `/health/ready` includes the database health check and reports
+readiness only when the configured database can be reached.
+
+These endpoints are intentionally available without business authentication so
+deployment infrastructure can probe application state.
+
+## 12. Build the EF Core migration bundle
+
+For a Windows deployment artifact:
+
+```text
+powershell -ExecutionPolicy Bypass -File .\scripts\build-migration-bundle.ps1
+```
+
+The resulting bundle is:
+
+```text
+artifacts/database/efbundle.exe
+```
+
+For Bash-based environments:
+
+```text
+bash scripts/build-migration-bundle.sh
+```
+
+The migration bundle is built from the versioned migrations in the application
+project. Supply the target environment configuration externally when applying
+it. The bundle may require `appsettings.json` or another supported
+configuration source beside the executable if that is how the target
+connection string is provided.
+
+Do not commit production connection strings, passwords, Syncfusion license
+keys, or other secrets.
+
+SQLite does not provide EF Core idempotent migration scripts, so the Book
+Edition uses the migration bundle as the repeatable deployment mechanism for
+schema updates instead of claiming idempotent-script support.
+
+## 13. Release artifact and deployment sequence
+
+A successful local release preparation produces:
+
+```text
+artifacts/publish/
+artifacts/database/efbundle.exe
+artifacts/test-results/
+```
+
+A conservative deployment sequence is:
+
+1. run the complete quality gate
+2. build the migration bundle
+3. back up the target database when appropriate
+4. apply pending migrations with the bundle
+5. deploy the contents of `artifacts/publish`
+6. verify `/health/live` and `/health/ready`
+7. perform the application smoke tests relevant to the release
+
+Keep environment-specific configuration outside the repository and inject it
+through the hosting platform or another approved configuration mechanism.
+
+## 14. CI release gate
+
+The repository contains:
+
+```text
+.github/workflows/release-quality-gate.yml
+```
+
+The workflow can be started manually with `workflow_dispatch` and also runs
+for tags matching `v*`. It executes the Bash quality gate, builds the EF Core
+migration bundle, and uploads the publish and database artifacts.
+
+The workflow is intentionally release-oriented rather than configured to run
+on every commit.
