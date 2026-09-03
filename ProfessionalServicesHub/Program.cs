@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Calendar;
 using ProfessionalServicesHub.Application.Clients;
+using ProfessionalServicesHub.Application.Documents;
 using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
 using ProfessionalServicesHub.Infrastructure.Data;
+using ProfessionalServicesHub.Infrastructure.Documents;
 using Syncfusion.Blazor;
 using Syncfusion.Licensing;
 
@@ -26,6 +28,12 @@ var connectionString = builder.Configuration
     ?? throw new InvalidOperationException(
         "The ProfessionalServicesHub connection string is not configured.");
 
+builder.Services.AddSignalR(options =>
+{
+    options.MaximumReceiveMessageSize = 100 * 1024 * 1024;
+});
+
+builder.Services.AddMemoryCache();
 builder.Services.AddSyncfusionBlazor();
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
@@ -35,6 +43,8 @@ builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
 builder.Services.AddScoped<ActivityBoardService>();
 builder.Services.AddScoped<CalendarService>();
+builder.Services.AddSingleton<IDocumentStorage, LocalDocumentStorage>();
+builder.Services.AddScoped<DocumentService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -69,7 +79,34 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 
+app.MapGet(
+    "/documents/{documentId:int}/download",
+    DownloadDocumentAsync);
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+static async Task<IResult> DownloadDocumentAsync(
+    int documentId,
+    DocumentService documentService,
+    CancellationToken cancellationToken)
+{
+    try
+    {
+        var download = await documentService.GetDownloadAsync(
+            documentId,
+            cancellationToken);
+
+        return Results.Stream(
+            download.Content,
+            download.ContentType,
+            download.FileName,
+            enableRangeProcessing: true);
+    }
+    catch (KeyNotFoundException)
+    {
+        return Results.NotFound();
+    }
+}

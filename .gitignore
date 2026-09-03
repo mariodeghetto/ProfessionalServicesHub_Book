@@ -485,3 +485,6 @@ $RECYCLE.BIN/
 ProfessionalServicesHub/Data/*.db
 ProfessionalServicesHub/Data/*.db-shm
 ProfessionalServicesHub/Data/*.db-wal
+
+# Professional Services Hub private document storage
+ProfessionalServicesHub/App_Data/

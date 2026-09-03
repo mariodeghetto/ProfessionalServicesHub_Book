@@ -1,8 +1,403 @@
 @page "/documents"
+@inject DocumentService DocumentService
+@inject ILogger<Documents> Logger
 
 <PageTitle>Documents - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Documents"
-            Subtitle="Document metadata, uploads, and business record associations." />
+            Subtitle="Private document storage, business metadata, and controlled preview." />
 
-<p>Document management will be implemented in a later chapter.</p>
+<div class="document-workspace">
+    <section class="document-panel" aria-labelledby="upload-heading">
+        <div>
+            <h2 id="upload-heading">Upload document</h2>
+            <p class="section-help">
+                Files are stored outside the public web root. Select an engagement
+                to associate the document with its client and work context.
+            </p>
+        </div>
+
+        <div class="document-form-grid">
+            <label>
+                Engagement
+                <select class="form-select" @bind="UploadEngagementId">
+                    <option value="">General document</option>
+                    @foreach (var engagement in Engagements)
+                    {
+                        <option value="@engagement.Id">@engagement.Label</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                Category
+                <select class="form-select" @bind="SelectedCategory">
+                    @foreach (var category in Enum.GetValues<DocumentCategory>())
+                    {
+                        <option value="@category">@category</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        <label>
+            Description
+            <textarea class="form-control"
+                      rows="2"
+                      maxlength="1000"
+                      @bind="Description"></textarea>
+        </label>
+
+        <SfUploader ID="BusinessDocumentUploader"
+                    AutoUpload="true"
+                    AllowMultiple="false"
+                    AllowedExtensions="@DocumentService.AllowedExtensionsCsv"
+                    MaxFileSize="@((double)DocumentService.MaxFileSizeBytes)">
+            <UploaderEvents ValueChange="OnUploadChanged" />
+        </SfUploader>
+
+        <div class="upload-rules">
+            Allowed: PDF, DOCX, XLSX, PNG, JPG. Maximum size: 20 MB.
+        </div>
+    </section>
+
+    <section class="document-panel" aria-labelledby="repository-heading">
+        <div class="repository-heading">
+            <div>
+                <h2 id="repository-heading">Document repository</h2>
+                <p class="section-help">
+                    Browse business metadata without exposing storage paths.
+                </p>
+            </div>
+
+            <label class="filter-field">
+                Engagement filter
+                <select class="form-select"
+                        value="@FilterEngagementValue"
+                        @onchange="OnFilterChanged">
+                    <option value="">All active documents</option>
+                    @foreach (var engagement in Engagements)
+                    {
+                        <option value="@engagement.Id">@engagement.Label</option>
+                    }
+                </select>
+            </label>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(StatusMessage))
+        {
+            <div class="document-message" role="@StatusRole">
+                @StatusMessage
+            </div>
+        }
+
+        @if (IsLoading)
+        {
+            <p role="status">Loading documents...</p>
+        }
+        else if (LoadFailed)
+        {
+            <div class="document-message" role="alert">
+                Unable to load the document repository.
+            </div>
+        }
+        else
+        {
+            <SfGrid DataSource="@Documents"
+                    AllowSorting="true"
+                    AllowFiltering="true"
+                    AllowSelection="true"
+                    Height="340px">
+                <GridColumns>
+                    <GridColumn Field="@nameof(DocumentListItem.FileName)"
+                                HeaderText="Document" Width="240" />
+                    <GridColumn Field="@nameof(DocumentListItem.Category)"
+                                HeaderText="Category" Width="120" />
+                    <GridColumn Field="@nameof(DocumentListItem.EngagementCode)"
+                                HeaderText="Engagement" Width="120" />
+                    <GridColumn Field="@nameof(DocumentListItem.ClientName)"
+                                HeaderText="Client" Width="180" />
+                    <GridColumn Field="@nameof(DocumentListItem.SizeDisplay)"
+                                HeaderText="Size"
+                                Width="100"
+                                AllowSorting="false"
+                                AllowFiltering="false" />
+                    <GridColumn Field="@nameof(DocumentListItem.UploadedBy)"
+                                HeaderText="Uploaded by"
+                                Width="140" />
+                    <GridColumn Field="@nameof(DocumentListItem.UploadedAtUtc)"
+                                HeaderText="Uploaded"
+                                Type="ColumnType.DateTime"
+                                Format="g"
+                                Width="155" />
+                </GridColumns>
+                <GridEvents TValue="DocumentListItem"
+                            RowSelected="OnDocumentRowSelected" />
+            </SfGrid>
+        }
+
+        @if (SelectedDocument is not null)
+        {
+            <div class="document-actions">
+                <strong>@SelectedDocument.FileName</strong>
+                <div>
+                    <a class="btn btn-outline-primary"
+                       href="@($"/documents/{SelectedDocument.Id}/download")">
+                        Download
+                    </a>
+                    <button class="btn btn-outline-secondary"
+                            type="button"
+                            @onclick="ArchiveSelectedAsync">
+                        Archive
+                    </button>
+                </div>
+            </div>
+        }
+    </section>
+
+    <section class="document-panel preview-panel"
+             aria-labelledby="preview-heading">
+        <div>
+            <h2 id="preview-heading">PDF preview</h2>
+            <p class="section-help">
+                The viewer receives an authorized stream; the private storage directory
+                is never published as a static asset.
+            </p>
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(PreviewMessage))
+        {
+            <div class="preview-message" role="status">
+                @PreviewMessage
+            </div>
+        }
+
+        <div class="pdf-viewer-host">
+            <SfPdfViewer2 @ref="PdfViewer"
+                          Height="650px"
+                          Width="100%" />
+        </div>
+    </section>
+</div>
+
+@code {
+    private List<EngagementDocumentOption> Engagements { get; set; } = [];
+    private List<DocumentListItem> Documents { get; set; } = [];
+    private SfPdfViewer2? PdfViewer { get; set; }
+    private int? UploadEngagementId { get; set; }
+    private int? FilterEngagementId { get; set; }
+    private string FilterEngagementValue =>
+        FilterEngagementId?.ToString() ?? string.Empty;
+    private DocumentCategory SelectedCategory { get; set; } =
+        DocumentCategory.Attachment;
+    private string? Description { get; set; }
+    private DocumentListItem? SelectedDocument { get; set; }
+    private string? StatusMessage { get; set; }
+    private string StatusRole { get; set; } = "status";
+    private string? PreviewMessage { get; set; } =
+        "Select a PDF document in the grid to preview it.";
+    private bool IsLoading { get; set; }
+    private bool LoadFailed { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            Engagements =
+                await DocumentService.GetEngagementOptionsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to load engagement options for documents.");
+            StatusMessage =
+                "Unable to load engagement options.";
+            StatusRole = "alert";
+        }
+
+        await ReloadDocumentsAsync();
+    }
+
+    private async Task ReloadDocumentsAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            LoadFailed = false;
+            Documents = await DocumentService.GetDocumentsAsync(
+                FilterEngagementId);
+
+            if (SelectedDocument is not null &&
+                Documents.All(x => x.Id != SelectedDocument.Id))
+            {
+                SelectedDocument = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to load documents.");
+            LoadFailed = true;
+            Documents = [];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnFilterChanged(ChangeEventArgs args)
+    {
+        var rawValue = args.Value?.ToString();
+
+        FilterEngagementId =
+            int.TryParse(rawValue, out var engagementId)
+                ? engagementId
+                : null;
+
+        SelectedDocument = null;
+        PreviewMessage =
+            "Select a PDF document in the grid to preview it.";
+
+        if (PdfViewer is not null)
+        {
+            await PdfViewer.UnloadAsync();
+        }
+
+        await ReloadDocumentsAsync();
+    }
+
+    private async Task OnUploadChanged(UploadChangeEventArgs args)
+    {
+        foreach (var entry in args.Files)
+        {
+            try
+            {
+                await using var stream =
+                    entry.File.OpenReadStream(
+                        DocumentService.MaxFileSizeBytes);
+
+                await DocumentService.UploadAsync(
+                    stream,
+                    entry.FileInfo.Name,
+                    entry.FileInfo.Type,
+                    (long)entry.FileInfo.Size,
+                    UploadEngagementId,
+                    SelectedCategory,
+                    Description);
+
+                StatusMessage =
+                    $"{entry.FileInfo.Name} uploaded successfully.";
+                StatusRole = "status";
+                Description = null;
+            }
+            catch (InvalidOperationException ex)
+            {
+                StatusMessage = ex.Message;
+                StatusRole = "alert";
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(
+                    ex,
+                    "Unable to upload document {FileName}.",
+                    entry.FileInfo.Name);
+                StatusMessage =
+                    "Unable to upload the selected document.";
+                StatusRole = "alert";
+            }
+        }
+
+        await ReloadDocumentsAsync();
+    }
+
+    private async Task OnDocumentRowSelected(
+        RowSelectEventArgs<DocumentListItem> args)
+    {
+        SelectedDocument = args.Data;
+        StatusMessage = null;
+
+        if (!args.Data.IsPdf)
+        {
+            PreviewMessage =
+                "Preview is available for PDF documents. Use Download for this file type.";
+
+            if (PdfViewer is not null)
+            {
+                await PdfViewer.UnloadAsync();
+            }
+            return;
+        }
+
+        if (PdfViewer is null)
+        {
+            PreviewMessage =
+                "The PDF viewer is not ready yet.";
+            return;
+        }
+
+        try
+        {
+            await using var source =
+                await DocumentService.OpenAsync(args.Data.Id);
+            using var buffer = new MemoryStream();
+            await source.CopyToAsync(buffer);
+            buffer.Position = 0;
+
+            await PdfViewer.LoadAsync(buffer);
+            PreviewMessage = args.Data.FileName;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to preview document {DocumentId}.",
+                args.Data.Id);
+            PreviewMessage =
+                "Unable to preview the selected PDF.";
+        }
+    }
+
+    private async Task ArchiveSelectedAsync()
+    {
+        if (SelectedDocument is null)
+        {
+            return;
+        }
+
+        var documentId = SelectedDocument.Id;
+        var fileName = SelectedDocument.FileName;
+
+        try
+        {
+            var archived =
+                await DocumentService.ArchiveAsync(documentId);
+
+            StatusMessage = archived
+                ? $"{fileName} archived."
+                : "The document is no longer available.";
+            StatusRole = archived ? "status" : "alert";
+
+            SelectedDocument = null;
+            PreviewMessage =
+                "Select a PDF document in the grid to preview it.";
+
+            if (PdfViewer is not null)
+            {
+                await PdfViewer.UnloadAsync();
+            }
+
+            await ReloadDocumentsAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to archive document {DocumentId}.",
+                documentId);
+            StatusMessage =
+                "Unable to archive the selected document.";
+            StatusRole = "alert";
+        }
+    }
+}
