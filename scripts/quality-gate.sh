@@ -11,7 +11,7 @@ cd "$ROOT"
 
 dotnet tool restore
 dotnet restore "$SOLUTION"
-dotnet build "$SOLUTION" -c Release --no-restore
+dotnet build "$SOLUTION" -c Release --no-restore -warnaserror
 dotnet test \
   --solution "$SOLUTION" \
   -c Release \
