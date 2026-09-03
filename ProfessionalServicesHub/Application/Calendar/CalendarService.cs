@@ -45,7 +45,7 @@ public sealed class CalendarService(
     public async Task<CalendarWriteResult> CreateAsync(
         ScheduleItem item)
     {
-        var validation = await NormalizeAndValidateAsync(item);
+        var validation = NormalizeAndValidate(item);
 
         if (validation is not null)
         {
@@ -93,7 +93,7 @@ public sealed class CalendarService(
     public async Task<CalendarWriteResult> UpdateAsync(
         ScheduleItem item)
     {
-        var validation = await NormalizeAndValidateAsync(item);
+        var validation = NormalizeAndValidate(item);
 
         if (validation is not null)
         {
@@ -169,14 +169,12 @@ public sealed class CalendarService(
 
         if (string.IsNullOrWhiteSpace(item.Subject))
         {
-            return Task.FromResult<string?>(
-                "Subject is required.");
+            return "Subject is required.";
         }
 
         if (!Enum.IsDefined(item.Kind))
         {
-            return Task.FromResult<string?>(
-                "The calendar entry type is not valid.");
+            return "The calendar entry type is not valid.";
         }
 
         if (item.Kind == CalendarEntryKind.Deadline &&
@@ -188,8 +186,7 @@ public sealed class CalendarService(
 
         if (item.EndTime <= item.StartTime)
         {
-            return Task.FromResult<string?>(
-                "End time must be later than start time.");
+            return "End time must be later than start time.";
         }
 
         return null;
