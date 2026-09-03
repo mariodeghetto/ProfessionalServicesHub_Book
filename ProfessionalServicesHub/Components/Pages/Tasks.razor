@@ -78,6 +78,7 @@ else
                                 AllowDragAndDrop="false" />
 
         <KanbanEvents TValue="ActivityBoardItem"
+                      DragStart="OnDragStart"
                       DragStop="OnDragStop" />
     </SfKanban>
 }
@@ -90,6 +91,10 @@ else
     private bool LoadFailed { get; set; }
 
     private string? BoardMessage { get; set; }
+
+    private int? DraggedActivityId { get; set; }
+
+    private ActivityStatus? DragSourceStatus { get; set; }
 
     protected override async Task OnInitializedAsync()
     {
@@ -116,26 +121,50 @@ else
         }
     }
 
+    private void OnDragStart(
+        Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
+    {
+        var item = args.Data?.FirstOrDefault();
+
+        if (item is null ||
+            !Enum.TryParse<ActivityStatus>(
+                item.StatusKey,
+                out var source))
+        {
+            args.Cancel = true;
+            DraggedActivityId = null;
+            DragSourceStatus = null;
+            BoardMessage = "The requested move is not valid.";
+            return;
+        }
+
+        DraggedActivityId = item.Id;
+        DragSourceStatus = source;
+        BoardMessage = null;
+    }
+
     private async Task OnDragStop(
         Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
     {
         var item = args.Data?.FirstOrDefault();
-        var previous = args.PreviousCardData?.FirstOrDefault();
 
         if (item is null ||
-            previous is null ||
-            !Enum.TryParse<ActivityStatus>(
-                previous.StatusKey,
-                out var source) ||
+            DraggedActivityId != item.Id ||
+            DragSourceStatus is not ActivityStatus source ||
             !Enum.TryParse<ActivityStatus>(
                 item.StatusKey,
                 out var target))
         {
             args.Cancel = true;
+            DraggedActivityId = null;
+            DragSourceStatus = null;
             BoardMessage = "The requested move is not valid.";
             await ReloadAsync();
             return;
         }
+
+        DraggedActivityId = null;
+        DragSourceStatus = null;
 
         if (source == target)
         {
