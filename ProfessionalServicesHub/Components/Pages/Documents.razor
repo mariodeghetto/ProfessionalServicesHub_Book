@@ -7,6 +7,16 @@
 <PageHeader Title="Documents"
             Subtitle="Private document storage, business metadata, and controlled preview." />
 
+@if (!string.IsNullOrWhiteSpace(StatusMessage))
+{
+    <div class="@StatusCssClass"
+         role="@StatusRole"
+         aria-live="assertive">
+        <strong>@StatusHeading</strong>
+        <span>@StatusMessage</span>
+    </div>
+}
+
 <div class="document-workspace">
     <section class="document-panel" aria-labelledby="upload-heading">
         <div>
@@ -51,9 +61,11 @@
         <SfUploader ID="BusinessDocumentUploader"
                     AutoUpload="true"
                     AllowMultiple="false"
+                    ShowFileList="false"
                     AllowedExtensions="@DocumentService.AllowedExtensionsCsv"
                     MaxFileSize="@((double)DocumentService.MaxFileSizeBytes)">
-            <UploaderEvents ValueChange="OnUploadChanged" />
+            <UploaderEvents FileSelected="OnFileSelected"
+                            ValueChange="OnUploadChanged" />
         </SfUploader>
 
         <div class="upload-rules">
@@ -83,13 +95,6 @@
                 </select>
             </label>
         </div>
-
-        @if (!string.IsNullOrWhiteSpace(StatusMessage))
-        {
-            <div class="document-message" role="@StatusRole">
-                @StatusMessage
-            </div>
-        }
 
         @if (IsLoading)
         {
@@ -194,6 +199,15 @@
     private DocumentListItem? SelectedDocument { get; set; }
     private string? StatusMessage { get; set; }
     private string StatusRole { get; set; } = "status";
+    private string StatusTone { get; set; } = "info";
+    private string StatusCssClass =>
+        $"document-status-banner document-status-{StatusTone}";
+    private string StatusHeading => StatusTone switch
+    {
+        "error" => "Error",
+        "success" => "Completed",
+        _ => "Information"
+    };
     private string? PreviewMessage { get; set; } =
         "Select a PDF document in the grid to preview it.";
     private bool IsLoading { get; set; }
@@ -211,9 +225,9 @@
             Logger.LogError(
                 ex,
                 "Unable to load engagement options for documents.");
-            StatusMessage =
-                "Unable to load engagement options.";
-            StatusRole = "alert";
+            SetStatus(
+                "Unable to load engagement options.",
+                "error");
         }
 
         await ReloadDocumentsAsync();
@@ -239,6 +253,9 @@
             Logger.LogError(ex, "Unable to load documents.");
             LoadFailed = true;
             DocumentItems = [];
+            SetStatus(
+                "Unable to load the document repository.",
+                "error");
         }
         finally
         {
@@ -267,6 +284,38 @@
         await ReloadDocumentsAsync();
     }
 
+    private void OnFileSelected(SelectedEventArgs args)
+    {
+        var file = args.FilesData?.FirstOrDefault();
+
+        if (file is null)
+        {
+            return;
+        }
+
+        if (!DocumentService.IsAllowedFileName(file.Name))
+        {
+            args.Cancel = true;
+            SetStatus(
+                $"File '{file.Name}' was rejected. Allowed types: PDF, DOCX, XLSX, PNG, JPG.",
+                "error");
+            return;
+        }
+
+        if (!DocumentService.IsAllowedFileSize((long)file.Size))
+        {
+            args.Cancel = true;
+            SetStatus(
+                $"File '{file.Name}' was rejected. The maximum size is 20 MB.",
+                "error");
+            return;
+        }
+
+        SetStatus(
+            $"Validating and uploading '{file.Name}'...",
+            "info");
+    }
+
     private async Task OnUploadChanged(UploadChangeEventArgs args)
     {
         foreach (var entry in args.Files)
@@ -286,15 +335,16 @@
                     SelectedCategory,
                     Description);
 
-                StatusMessage =
-                    $"{entry.FileInfo.Name} uploaded successfully.";
-                StatusRole = "status";
+                SetStatus(
+                    $"{entry.FileInfo.Name} uploaded successfully.",
+                    "success");
                 Description = null;
             }
             catch (InvalidOperationException ex)
             {
-                StatusMessage = ex.Message;
-                StatusRole = "alert";
+                SetStatus(
+                    $"{entry.FileInfo.Name} was rejected. {ex.Message}",
+                    "error");
             }
             catch (Exception ex)
             {
@@ -302,9 +352,9 @@
                     ex,
                     "Unable to upload document {FileName}.",
                     entry.FileInfo.Name);
-                StatusMessage =
-                    "Unable to upload the selected document.";
-                StatusRole = "alert";
+                SetStatus(
+                    "Unable to upload the selected document.",
+                    "error");
             }
         }
 
@@ -322,7 +372,6 @@
         }
 
         SelectedDocument = selectedDocument;
-        StatusMessage = null;
 
         if (!selectedDocument.IsPdf)
         {
@@ -365,6 +414,13 @@
         }
     }
 
+    private void SetStatus(string message, string tone)
+    {
+        StatusMessage = message;
+        StatusTone = tone;
+        StatusRole = tone == "error" ? "alert" : "status";
+    }
+
     private async Task ArchiveSelectedAsync()
     {
         if (SelectedDocument is null)
@@ -380,10 +436,11 @@
             var archived =
                 await DocumentService.ArchiveAsync(documentId);
 
-            StatusMessage = archived
-                ? $"{fileName} archived."
-                : "The document is no longer available.";
-            StatusRole = archived ? "status" : "alert";
+            SetStatus(
+                archived
+                    ? $"{fileName} archived."
+                    : "The document is no longer available.",
+                archived ? "success" : "error");
 
             SelectedDocument = null;
             PreviewMessage =
@@ -402,9 +459,9 @@
                 ex,
                 "Unable to archive document {DocumentId}.",
                 documentId);
-            StatusMessage =
-                "Unable to archive the selected document.";
-            StatusRole = "alert";
+            SetStatus(
+                "Unable to archive the selected document.",
+                "error");
         }
     }
 }
