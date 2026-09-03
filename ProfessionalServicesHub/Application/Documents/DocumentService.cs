@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Domain.Documents;
+using ProfessionalServicesHub.Domain.Work;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Application.Documents;
@@ -212,7 +213,7 @@ public sealed class DocumentService(
                                 selectedEngagementId &&
                             assignment.UserId == user.Id &&
                             assignment.Kind !=
-                                Domain.Work.AssignmentKind.Observer,
+                                AssignmentKind.Observer,
                         cancellationToken);
 
                 if (!canEdit)
@@ -380,7 +381,7 @@ public sealed class DocumentService(
                         assignment.EngagementId == engagementId &&
                         assignment.UserId == user.Id &&
                         assignment.Kind !=
-                            Domain.Work.AssignmentKind.Observer,
+                            AssignmentKind.Observer,
                     cancellationToken);
 
             if (!canEdit)
