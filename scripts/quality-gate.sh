@@ -5,13 +5,20 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SOLUTION="$ROOT/ProfessionalServicesHub_Book.slnx"
 APP_PROJECT="$ROOT/ProfessionalServicesHub/ProfessionalServicesHub.csproj"
 PUBLISH_DIR="$ROOT/artifacts/publish"
+TEST_RESULTS_DIR="$ROOT/artifacts/test-results"
 
 cd "$ROOT"
 
 dotnet tool restore
 dotnet restore "$SOLUTION"
 dotnet build "$SOLUTION" -c Release --no-restore
-dotnet test "$SOLUTION" -c Release --no-build --logger "trx"
+dotnet test \
+  --solution "$SOLUTION" \
+  -c Release \
+  --no-build \
+  --results-directory "$TEST_RESULTS_DIR" \
+  -- \
+  --report-trx
 dotnet format "$SOLUTION" --verify-no-changes --no-restore
 
 dotnet ef migrations has-pending-model-changes \
