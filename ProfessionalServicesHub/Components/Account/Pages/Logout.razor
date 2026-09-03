@@ -31,7 +31,12 @@
 
 @code {
     [SupplyParameterFromForm]
-    private LogoutInput Input { get; set; } = new();
+    private LogoutInput? Input { get; set; }
+
+    protected override void OnInitialized()
+    {
+        Input ??= new LogoutInput();
+    }
 
     private async Task LogoutAsync()
     {
