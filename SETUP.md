@@ -99,11 +99,14 @@ From the repository root:
 dotnet ef database update --project ProfessionalServicesHub/ProfessionalServicesHub.csproj --startup-project ProfessionalServicesHub/ProfessionalServicesHub.csproj
 ```
 
-The current migration creates the `Clients` table and its indexes.
+The current migrations create the client model plus the Chapter 6
+`Engagements` and `WorkActivities` tables, foreign keys, and indexes.
 
 The Development seed is intentionally separate from schema migration. It runs
-when the application starts and inserts deterministic sample clients only
-when the Clients table is empty.
+when the application starts, inserts deterministic sample clients only when
+the Clients table is empty, and independently initializes the workflow slice
+with two sample engagements and five work activities when those workflow
+tables are empty.
 
 ## 7. Run the application
 
@@ -115,21 +118,21 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 5 milestone, verify that:
+At the Chapter 6 milestone, verify that:
 
-- the Clients page still supports sorting, search, filtering, paging, and single-row selection
-- New client opens `/clients/new` with an empty edit model and Active status
-- required Code and Name validation prevents invalid submission
-- the business email policy rejects `name@example` and accepts multi-label domains such as `name@sub.example.com`
-- a duplicate client code is reported without losing the entered form data
-- a valid client can be created and appears in the Clients grid
-- Open navigates to `/clients/{id}` and loads the existing values for editing
-- changes to an existing client are persisted and reflected in the Clients grid
-- an unknown client identifier produces an application message rather than an unhandled exception
-- Save is disabled while a save operation is already in progress
-- leaving a modified form triggers an unsaved-change confirmation
-- confirming Cancel does not submit or persist the modified form
-- no Syncfusion asset, license, Blazor, or EF Core runtime error appears in the browser console or application log
+- the Chapter 5 client grid and client editor behaviors remain operational
+- `/tasks` displays the Planned, In progress, Waiting, and Completed Kanban columns
+- the development seed produces five work-activity cards across Alex Morgan, Jordan Lee, and Unassigned swimlanes
+- engagement codes such as `ENG-001` and `ENG-002` appear as the work context on task cards
+- `/engagements` clearly states that engagement data already supports the task workflow while full engagement management is deferred
+- Planned -> Completed is rejected by the workflow
+- Planned -> In progress is accepted and remains persisted after refresh
+- reordering within one column is rejected with an explicit message because Rank persistence is not implemented yet
+- In progress -> Completed is accepted
+- Completed -> Planned is rejected
+- Completed -> In progress is accepted as an explicit reopen operation
+- Waiting -> In progress and In progress -> Waiting are accepted
+- no Syncfusion asset, license, Blazor, EF Core, or Kanban runtime error appears in the browser console or application log
 
 If the local HTTPS development certificate is not trusted, run:
 
