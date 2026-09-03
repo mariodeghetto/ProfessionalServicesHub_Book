@@ -4,6 +4,9 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.Identity
 @using static Microsoft.AspNetCore.Components.Web.RenderMode
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using Microsoft.JSInterop
@@ -11,9 +14,12 @@
 @using ProfessionalServicesHub.Application.Calendar
 @using ProfessionalServicesHub.Application.Clients
 @using ProfessionalServicesHub.Application.Documents
+@using ProfessionalServicesHub.Application.Security
 @using ProfessionalServicesHub.Application.Dashboard
 @using ProfessionalServicesHub.Application.Work
 @using ProfessionalServicesHub.Components
+@using ProfessionalServicesHub.Components.Account
+@using ProfessionalServicesHub.Components.Security
 @using ProfessionalServicesHub.Components.Layout
 @using ProfessionalServicesHub.Components.Shared
 @using ProfessionalServicesHub.Components.Services
@@ -21,6 +27,7 @@
 @using ProfessionalServicesHub.Domain.Clients
 @using ProfessionalServicesHub.Domain.Documents
 @using ProfessionalServicesHub.Domain.Work
+@using ProfessionalServicesHub.Infrastructure.Identity
 @using Syncfusion.Blazor
 @using Syncfusion.Blazor.Buttons
 @using Syncfusion.Blazor.Charts
