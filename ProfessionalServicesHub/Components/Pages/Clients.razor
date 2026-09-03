@@ -10,15 +10,19 @@
 <PageHeader Title="Clients"
             Subtitle="Client records and relationship management.">
     <Actions>
-        <SfButton IsPrimary="true"
-                  OnClick="CreateClient">
-            New client
-        </SfButton>
+        <AuthorizeView Policy="@AppPolicies.ManageClients">
+            <Authorized>
+                <SfButton IsPrimary="true"
+                          OnClick="CreateClient">
+                    New client
+                </SfButton>
 
-        <SfButton Disabled="@(SelectedClient is null)"
-                  OnClick="OpenSelectedClient">
-            Open
-        </SfButton>
+                <SfButton Disabled="@(SelectedClient is null)"
+                          OnClick="OpenSelectedClient">
+                    Open
+                </SfButton>
+            </Authorized>
+        </AuthorizeView>
     </Actions>
 </PageHeader>
 
@@ -49,10 +53,14 @@
                                 Filtering="OnClientFiltering" />
         </SfAutoComplete>
 
-        <SfButton Disabled="@(QuickClientId is null)"
-                  OnClick="OpenQuickClient">
-            Open client
-        </SfButton>
+        <AuthorizeView Policy="@AppPolicies.ManageClients">
+            <Authorized>
+                <SfButton Disabled="@(QuickClientId is null)"
+                          OnClick="OpenQuickClient">
+                    Open client
+                </SfButton>
+            </Authorized>
+        </AuthorizeView>
     </div>
 
     @if (!string.IsNullOrWhiteSpace(LookupError))
