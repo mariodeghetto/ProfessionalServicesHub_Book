@@ -9,6 +9,8 @@ TEST_RESULTS_DIR="$ROOT/artifacts/test-results"
 
 cd "$ROOT"
 
+rm -rf "$PUBLISH_DIR" "$TEST_RESULTS_DIR"
+
 dotnet tool restore
 dotnet restore "$SOLUTION"
 dotnet build "$SOLUTION" -c Release --no-restore -warnaserror
@@ -26,8 +28,6 @@ dotnet ef migrations has-pending-model-changes \
   --project "$APP_PROJECT" \
   --startup-project "$APP_PROJECT" \
   --no-build
-
-rm -rf "$PUBLISH_DIR"
 
 dotnet publish "$APP_PROJECT" \
   -c Release \
