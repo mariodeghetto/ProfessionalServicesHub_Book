@@ -45,7 +45,7 @@ public sealed class EngagementScopeTests
 
         Assert.Equal(2, rows.Count);
         Assert.Equal(
-            ["ENG-001", "ENG-002"],
+            new[] { "ENG-001", "ENG-002" },
             rows.Select(row => row.Code).ToArray());
     }
 
