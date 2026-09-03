@@ -102,8 +102,9 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 The current migrations create the client model, the Chapter 6
 `Engagements` and `WorkActivities` tables, the Chapter 7
 `CalendarEntries` table, and the Chapter 8 `Documents` table with its
-business relationships and indexes. Chapter 9 adds no schema changes or new
-migration; the dashboard reads and aggregates the existing operational data.
+business relationships and indexes. Chapters 9 and 10 add no schema changes
+or new migrations; the dashboard and UX improvements read and operate on the
+existing model.
 
 The Development seed is intentionally separate from schema migration. It runs
 when the application starts, inserts deterministic sample clients only when
@@ -122,7 +123,7 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 9 milestone, verify that:
+At the Chapter 10 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
 - the Chapter 6 Kanban workflow remains operational and persisted
@@ -159,6 +160,17 @@ At the Chapter 9 milestone, verify that:
 - dashboard refresh updates the snapshot and the visible `Last refreshed at` timestamp
 - the dashboard charts remain readable when the browser width is reduced and collapse to a single column before becoming cramped
 - no Syncfusion Charts, Blazor, or EF Core runtime error appears while loading or refreshing the dashboard
+- client save disables the Save action while processing and exposes a visible busy state with Syncfusion Spinner
+- a successful client save publishes a toast notification before returning to the client list
+- the Clients page quick lookup searches by client code or name after at least two characters and opens the selected client
+- client lookup uses server-side filtering with debounce, limits results, and does not replace persistent errors with transient toast feedback
+- successful document upload publishes a toast while validation and technical failures remain visible inline
+- the document Archive action exposes a tooltip and archiving publishes an informational toast
+- deleting a calendar entry first displays a confirmation dialog; canceling preserves the entry and confirming deletes it
+- successful calendar deletion publishes an informational toast
+- a successful Kanban workflow transition publishes a toast and concurrent duplicate moves are prevented in the UI
+- one global toast host and one dialog provider serve the interactive layout
+- no Syncfusion Notifications, Popups, Spinner, AutoComplete, Blazor, or EF Core runtime error appears in the browser console or application log
 
 If the local HTTPS development certificate is not trusted, run:
 
