@@ -107,11 +107,6 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-await IdentitySeeder.EnsureIdentityAsync(
-    app.Services,
-    app.Configuration,
-    app.Environment);
-
 if (app.Environment.IsDevelopment())
 {
     await using var scope = app.Services.CreateAsyncScope();
@@ -122,6 +117,11 @@ if (app.Environment.IsDevelopment())
     await DevelopmentDataSeeder.SeedWorkAsync(factory);
     await DevelopmentDataSeeder.SeedCalendarAsync(factory);
 }
+
+await IdentitySeeder.EnsureIdentityAsync(
+    app.Services,
+    app.Configuration,
+    app.Environment);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
