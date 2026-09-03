@@ -32,7 +32,8 @@ public sealed class DocumentScopeTests
         await Assert.ThrowsAsync<KeyNotFoundException>(
             () => service.GetDownloadAsync(
                 seeded.SecondDocumentId,
-                principal));
+                principal,
+                TestContext.Current.CancellationToken));
 
         Assert.Equal(
             0,
@@ -62,7 +63,8 @@ public sealed class DocumentScopeTests
 
         var result = await service.GetDownloadAsync(
             seeded.FirstDocumentId,
-            principal);
+            principal,
+            TestContext.Current.CancellationToken);
 
         await using var content = result.Content;
 
