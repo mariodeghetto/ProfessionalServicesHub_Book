@@ -103,7 +103,7 @@
         }
         else
         {
-            <SfGrid DataSource="@Documents"
+            <SfGrid DataSource="@DocumentItems"
                     AllowSorting="true"
                     AllowFiltering="true"
                     AllowSelection="true"
@@ -182,7 +182,7 @@
 
 @code {
     private List<EngagementDocumentOption> Engagements { get; set; } = [];
-    private List<DocumentListItem> Documents { get; set; } = [];
+    private List<DocumentListItem> DocumentItems { get; set; } = [];
     private SfPdfViewer2? PdfViewer { get; set; }
     private int? UploadEngagementId { get; set; }
     private int? FilterEngagementId { get; set; }
@@ -225,11 +225,11 @@
         {
             IsLoading = true;
             LoadFailed = false;
-            Documents = await DocumentService.GetDocumentsAsync(
+            DocumentItems = await DocumentService.GetDocumentsAsync(
                 FilterEngagementId);
 
             if (SelectedDocument is not null &&
-                Documents.All(x => x.Id != SelectedDocument.Id))
+                DocumentItems.All(x => x.Id != SelectedDocument.Id))
             {
                 SelectedDocument = null;
             }
@@ -238,7 +238,7 @@
         {
             Logger.LogError(ex, "Unable to load documents.");
             LoadFailed = true;
-            Documents = [];
+            DocumentItems = [];
         }
         finally
         {
@@ -246,7 +246,7 @@
         }
     }
 
-    private async Task OnFilterChanged(ChangeEventArgs args)
+    private async Task OnFilterChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
     {
         var rawValue = args.Value?.ToString();
 
