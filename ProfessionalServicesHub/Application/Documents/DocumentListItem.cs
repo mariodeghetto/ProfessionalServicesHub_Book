@@ -7,7 +7,7 @@ public sealed record DocumentListItem(
     string FileName,
     DocumentCategory Category,
     long SizeBytes,
-    DateTimeOffset UploadedAtUtc,
+    DateTime UploadedAtUtc,
     string? UploadedBy,
     string ContentType,
     string? ClientName,
