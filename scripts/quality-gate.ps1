@@ -28,6 +28,14 @@ function Invoke-Checked {
 Push-Location $root
 
 try {
+    if (Test-Path $publishDir) {
+        Remove-Item $publishDir -Recurse -Force
+    }
+
+    if (Test-Path $testResultsDir) {
+        Remove-Item $testResultsDir -Recurse -Force
+    }
+
     Invoke-Checked "Restore local tools" {
         dotnet tool restore
     }
@@ -65,10 +73,6 @@ try {
             --project $appProject `
             --startup-project $appProject `
             --no-build
-    }
-
-    if (Test-Path $publishDir) {
-        Remove-Item $publishDir -Recurse -Force
     }
 
     Invoke-Checked "Publish Release artifact" {
