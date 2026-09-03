@@ -23,17 +23,21 @@ using Syncfusion.Licensing;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var syncfusionLicenseKey =
-    builder.Configuration["Syncfusion:LicenseKey"];
-
-if (string.IsNullOrWhiteSpace(syncfusionLicenseKey))
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    throw new InvalidOperationException(
-        "The Syncfusion license key is not configured. " +
-        "See SETUP.md for configuration instructions.");
-}
+    var syncfusionLicenseKey =
+        builder.Configuration["Syncfusion:LicenseKey"];
 
-SyncfusionLicenseProvider.RegisterLicense(syncfusionLicenseKey);
+    if (string.IsNullOrWhiteSpace(syncfusionLicenseKey))
+    {
+        throw new InvalidOperationException(
+            "The Syncfusion license key is not configured. " +
+            "See SETUP.md for configuration instructions.");
+    }
+
+    SyncfusionLicenseProvider.RegisterLicense(
+        syncfusionLicenseKey);
+}
 
 var connectionString = builder.Configuration
     .GetConnectionString("ProfessionalServicesHub")
