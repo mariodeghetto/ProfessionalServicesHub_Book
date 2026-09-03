@@ -29,6 +29,7 @@
     </div>
 }
 
+<div class="calendar-scheduler">
 <SfSchedule TValue="ScheduleItem"
             @ref="ScheduleRef"
             Height="650px"
@@ -81,6 +82,7 @@
                     Navigating="OnNavigating"
                     OnActionBegin="OnActionBegin" />
 </SfSchedule>
+</div>
 
 @code {
     private SfSchedule<ScheduleItem>? ScheduleRef { get; set; }
