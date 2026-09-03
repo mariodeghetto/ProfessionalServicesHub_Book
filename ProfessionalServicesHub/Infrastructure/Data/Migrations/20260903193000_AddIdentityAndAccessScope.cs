@@ -1,12 +1,9 @@
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
 namespace ProfessionalServicesHub.Infrastructure.Data.Migrations;
 
-[DbContext(typeof(ApplicationDbContext))]
-[Migration("20260903193000_AddIdentityAndAccessScope")]
 public partial class AddIdentityAndAccessScope : Migration
 {
     protected override void Up(MigrationBuilder migrationBuilder)
