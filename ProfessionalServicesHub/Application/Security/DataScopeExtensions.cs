@@ -1,4 +1,5 @@
 using ProfessionalServicesHub.Domain.Calendar;
+using ProfessionalServicesHub.Domain.Clients;
 using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Infrastructure.Data;
 
@@ -6,6 +7,24 @@ namespace ProfessionalServicesHub.Application.Security;
 
 public static class DataScopeExtensions
 {
+    public static IQueryable<Client> VisibleTo(
+        this IQueryable<Client> query,
+        ApplicationDbContext db,
+        CurrentUser user)
+    {
+        if (EngagementScope.HasGlobalOperationalScope(user))
+        {
+            return query;
+        }
+
+        return query.Where(client =>
+            db.Engagements.Any(engagement =>
+                engagement.ClientId == client.Id &&
+                db.EngagementAssignments.Any(assignment =>
+                    assignment.EngagementId == engagement.Id &&
+                    assignment.UserId == user.Id)));
+    }
+
     public static IQueryable<CalendarEntry> VisibleTo(
         this IQueryable<CalendarEntry> query,
         ApplicationDbContext db,
