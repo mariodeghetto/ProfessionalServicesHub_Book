@@ -1,6 +1,7 @@
 @page "/clients/new"
 @page "/clients/{Id:int}"
 @inject ClientCommandService ClientCommands
+@inject UiNotificationService Notifications
 @inject NavigationManager Navigation
 @inject IJSRuntime JsRuntime
 @inject ILogger<ClientEditor> Logger
@@ -93,7 +94,10 @@ else if (EditContext is not null)
             </div>
         </div>
 
-        <div class="form-actions">
+        <div class="form-actions save-operation"
+             aria-busy="@(IsSaving ? "true" : "false")">
+            <SfSpinner @bind-Visible="IsSaving" />
+
             <SfButton IsPrimary="true"
                       Disabled="@IsSaving"
                       HtmlAttributes="@SubmitButtonAttributes">
@@ -105,6 +109,13 @@ else if (EditContext is not null)
                       OnClick="Cancel">
                 Cancel
             </SfButton>
+
+            @if (IsSaving)
+            {
+                <span class="save-status" role="status">
+                    Saving client...
+                </span>
+            }
         </div>
     </EditForm>
 }
@@ -237,6 +248,15 @@ else if (EditContext is not null)
             }
 
             SavedSuccessfully = true;
+
+            await Notifications.PublishAsync(
+                new UiNotification(
+                    "Client saved",
+                    IsNew
+                        ? "The client was added successfully."
+                        : "The client changes were saved.",
+                    UiNotificationKind.Success));
+
             Navigation.NavigateTo("/clients");
         }
         catch (Exception ex)
