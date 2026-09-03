@@ -21,8 +21,15 @@
     font-size: 0.8rem;
 }
 
-.calendar-scheduler ::deep .e-schedule .e-vertical-view .e-left-indent .e-all-day-cells,
-.calendar-scheduler ::deep .e-schedule .e-vertical-view .e-date-header-wrap .e-all-day-cells {
-    min-height: 72px !important;
-    height: 72px !important;
+.schedule-entry-all-day {
+    align-items: center;
+    display: flex;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.schedule-entry-all-day strong,
+.schedule-entry-all-day span {
+    flex: 0 1 auto;
+    min-width: 0;
 }
