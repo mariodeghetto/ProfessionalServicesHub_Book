@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Infrastructure.Data;
 
 namespace ProfessionalServicesHub.Application.Clients;
@@ -13,14 +14,18 @@ public sealed record ClientListItem(
     DateTime CreatedOn);
 
 public sealed class ClientQueryService(
-    IDbContextFactory<ApplicationDbContext> contextFactory)
+    IDbContextFactory<ApplicationDbContext> contextFactory,
+    ICurrentUserAccessor currentUserAccessor)
 {
     public async Task<List<ClientListItem>> GetAllAsync()
     {
+        var user = await currentUserAccessor.GetAsync();
+
         await using var db = await contextFactory.CreateDbContextAsync();
 
         return await db.Clients
             .AsNoTracking()
+            .VisibleTo(db, user)
             .OrderBy(x => x.Name)
             .Select(x => new ClientListItem(
                 x.Id,
