@@ -23,10 +23,12 @@ public sealed class MigrationTests
             await using var db =
                 new ApplicationDbContext(options);
 
-            await db.Database.MigrateAsync();
+            await db.Database.MigrateAsync(
+                TestContext.Current.CancellationToken);
 
             var applied =
-                await db.Database.GetAppliedMigrationsAsync();
+                await db.Database.GetAppliedMigrationsAsync(
+                    TestContext.Current.CancellationToken);
 
             Assert.Contains(
                 applied,
