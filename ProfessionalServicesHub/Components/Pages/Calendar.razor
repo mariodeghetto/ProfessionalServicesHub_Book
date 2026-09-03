@@ -1,8 +1,318 @@
 @page "/calendar"
+@inject CalendarService CalendarOperations
+@inject ILogger<Calendar> Logger
 
 <PageTitle>Calendar - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Calendar"
-            Subtitle="Appointments, deadlines, and operational scheduling." />
+            Subtitle="Appointments, deadlines, and operational scheduling.">
+    <Actions>
+        <SfButton IsPrimary="true"
+                  OnClick="NewAppointmentAsync">
+            New appointment
+        </SfButton>
+        <SfButton OnClick="NewDeadlineAsync">
+            New deadline
+        </SfButton>
+    </Actions>
+</PageHeader>
 
-<p>Calendar and scheduling features will be implemented in a later chapter.</p>
+@if (IsLoading)
+{
+    <p role="status">Loading calendar...</p>
+}
+
+@if (!string.IsNullOrWhiteSpace(CalendarMessage))
+{
+    <div class="calendar-message" role="alert">
+        @CalendarMessage
+    </div>
+}
+
+<SfSchedule TValue="ScheduleItem"
+            @ref="ScheduleRef"
+            Height="650px"
+            @bind-SelectedDate="SelectedDate"
+            @bind-CurrentView="CurrentView"
+            StartHour="08:00"
+            EndHour="19:00"
+            AllowDragAndDrop="true"
+            AllowResizing="true">
+    <ScheduleTimeScale Interval="60"
+                       SlotCount="2" />
+
+    <ScheduleViews>
+        <ScheduleView Option="View.Day" />
+        <ScheduleView Option="View.Week" />
+        <ScheduleView Option="View.WorkWeek"
+                      IsSelected="true" />
+        <ScheduleView Option="View.Month" />
+        <ScheduleView Option="View.Agenda" />
+    </ScheduleViews>
+
+    <ScheduleEventSettings TValue="ScheduleItem"
+                           DataSource="@Items">
+        <Template>
+            @{
+                var item = (ScheduleItem)context;
+                var kindText = item.Kind == CalendarEntryKind.Deadline
+                    ? "Deadline"
+                    : "Appointment";
+            }
+
+            @if (item.IsAllDay)
+            {
+                <div class="schedule-entry schedule-entry-all-day">
+                    <strong>@item.Subject</strong>
+                    <span class="schedule-entry-all-day-kind">@kindText</span>
+                </div>
+            }
+            else
+            {
+                <div class="schedule-entry">
+                    <strong>@item.Subject</strong>
+                    <span>@kindText</span>
+
+                    @if (!string.IsNullOrWhiteSpace(item.ClientName))
+                    {
+                        <small>@item.ClientName</small>
+                    }
+
+                    @if (!string.IsNullOrWhiteSpace(item.EngagementCode))
+                    {
+                        <small>@item.EngagementCode</small>
+                    }
+                </div>
+            }
+        </Template>
+    </ScheduleEventSettings>
+
+    <ScheduleEvents TValue="ScheduleItem"
+                    Navigating="OnNavigating"
+                    OnActionBegin="OnActionBegin" />
+</SfSchedule>
+
+@code {
+    private SfSchedule<ScheduleItem>? ScheduleRef { get; set; }
+
+    private List<ScheduleItem> Items { get; set; } = [];
+
+    private DateTime SelectedDate { get; set; } = DateTime.Today;
+
+    private View CurrentView { get; set; } = View.WorkWeek;
+
+    private bool IsLoading { get; set; }
+
+    private string? CalendarMessage { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCalendarAsync();
+    }
+
+    private async Task NewAppointmentAsync()
+    {
+        if (ScheduleRef is null)
+        {
+            return;
+        }
+
+        var start = SelectedDate.Date.AddHours(9);
+
+        var item = new ScheduleItem
+        {
+            Kind = CalendarEntryKind.Appointment,
+            StartTime = start,
+            EndTime = start.AddHours(1)
+        };
+
+        await ScheduleRef.OpenEditorAsync(
+            item,
+            Syncfusion.Blazor.Schedule.CurrentAction.Add);
+    }
+
+    private async Task NewDeadlineAsync()
+    {
+        if (ScheduleRef is null)
+        {
+            return;
+        }
+
+        var day = SelectedDate.Date;
+
+        var item = new ScheduleItem
+        {
+            Kind = CalendarEntryKind.Deadline,
+            IsAllDay = true,
+            StartTime = day,
+            EndTime = day.AddDays(1)
+        };
+
+        await ScheduleRef.OpenEditorAsync(
+            item,
+            Syncfusion.Blazor.Schedule.CurrentAction.Add);
+    }
+
+    private static (DateTime From, DateTime To) GetWindow(
+        DateTime anchor,
+        View view)
+    {
+        return view switch
+        {
+            View.Day =>
+                (anchor.Date.AddDays(-1),
+                 anchor.Date.AddDays(2)),
+
+            View.Week or View.WorkWeek =>
+                (anchor.Date.AddDays(-14),
+                 anchor.Date.AddDays(21)),
+
+            View.Month =>
+                (new DateTime(anchor.Year, anchor.Month, 1)
+                    .AddDays(-7),
+                 new DateTime(anchor.Year, anchor.Month, 1)
+                    .AddMonths(1)
+                    .AddDays(7)),
+
+            View.Agenda =>
+                (anchor.Date,
+                 anchor.Date.AddDays(60)),
+
+            _ =>
+                (anchor.Date.AddDays(-14),
+                 anchor.Date.AddDays(45))
+        };
+    }
+
+    private async Task OnNavigating(
+        Syncfusion.Blazor.Schedule.NavigatingEventArgs args)
+    {
+        SelectedDate = args.CurrentDate;
+        CurrentView = args.CurrentView;
+
+        await LoadCalendarAsync();
+    }
+
+    private async Task LoadCalendarAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            CalendarMessage = null;
+
+            var window = GetWindow(
+                SelectedDate,
+                CurrentView);
+
+            Items = await CalendarOperations.GetRangeAsync(
+                window.From,
+                window.To);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to load the calendar.");
+
+            CalendarMessage =
+                "Unable to load the calendar. Please try again later.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task ReloadAsync()
+    {
+        var window = GetWindow(
+            SelectedDate,
+            CurrentView);
+
+        Items = await CalendarOperations.GetRangeAsync(
+            window.From,
+            window.To);
+    }
+
+    private async Task OnActionBegin(
+        Syncfusion.Blazor.Schedule.ActionEventArgs<ScheduleItem> args)
+    {
+        CalendarWriteResult? result = null;
+
+        try
+        {
+            if (args.ActionType ==
+                Syncfusion.Blazor.Schedule.ActionType.EventCreate)
+            {
+                var item = args.AddedRecords?.FirstOrDefault();
+
+                if (item is null)
+                {
+                    return;
+                }
+
+                args.Cancel = true;
+                result = await CalendarOperations.CreateAsync(item);
+            }
+            else if (args.ActionType ==
+                Syncfusion.Blazor.Schedule.ActionType.EventChange)
+            {
+                var item = args.ChangedRecords?.FirstOrDefault();
+
+                if (item is null)
+                {
+                    return;
+                }
+
+                args.Cancel = true;
+                result = await CalendarOperations.UpdateAsync(item);
+            }
+            else if (args.ActionType ==
+                Syncfusion.Blazor.Schedule.ActionType.EventRemove)
+            {
+                var item = args.DeletedRecords?.FirstOrDefault();
+
+                if (item is null)
+                {
+                    return;
+                }
+
+                args.Cancel = true;
+                result = await CalendarOperations.DeleteAsync(item.Id);
+            }
+
+            if (result is null)
+            {
+                return;
+            }
+
+            CalendarMessage =
+                result.Success
+                    ? null
+                    : result.Error;
+
+            await ReloadAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to persist a calendar action.");
+
+            args.Cancel = true;
+            CalendarMessage =
+                "Unable to update the calendar. Please try again later.";
+
+            try
+            {
+                await ReloadAsync();
+            }
+            catch (Exception reloadException)
+            {
+                Logger.LogError(
+                    reloadException,
+                    "Unable to reload the calendar after a failed write.");
+            }
+        }
+    }
+}

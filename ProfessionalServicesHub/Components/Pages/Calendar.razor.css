@@ -1,0 +1,46 @@
+.calendar-message {
+    margin-bottom: 1rem;
+}
+
+.schedule-entry {
+    display: grid;
+    gap: 0.15rem;
+    overflow: hidden;
+}
+
+.schedule-entry strong,
+.schedule-entry span,
+.schedule-entry small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.schedule-entry span,
+.schedule-entry small {
+    font-size: 0.8rem;
+}
+
+.schedule-entry-all-day {
+    display: grid;
+    gap: 0;
+    line-height: 1.05;
+    white-space: normal;
+}
+
+.schedule-entry-all-day strong,
+.schedule-entry-all-day-kind {
+    display: block;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.schedule-entry-all-day strong {
+    font-size: 0.72rem;
+}
+
+.schedule-entry-all-day-kind {
+    font-size: 0.66rem;
+}

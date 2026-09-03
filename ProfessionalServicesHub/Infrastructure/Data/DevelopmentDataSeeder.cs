@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using ProfessionalServicesHub.Domain.Calendar;
 using ProfessionalServicesHub.Domain.Clients;
 using ProfessionalServicesHub.Domain.Work;
 
@@ -218,6 +219,64 @@ public static class DevelopmentDataSeeder
                 Status = ActivityStatus.Planned,
                 Priority = ActivityPriority.High,
                 Rank = 30
+            });
+
+        await db.SaveChangesAsync();
+    }
+
+    public static async Task SeedCalendarAsync(
+        IDbContextFactory<ApplicationDbContext> factory)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+
+        if (await db.CalendarEntries.AnyAsync())
+        {
+            return;
+        }
+
+        var engagements = await db.Engagements
+            .Where(x => x.Code == "ENG-001" || x.Code == "ENG-002")
+            .ToDictionaryAsync(x => x.Code);
+
+        if (!engagements.TryGetValue("ENG-001", out var accessibilityReview) ||
+            !engagements.TryGetValue("ENG-002", out var reportingModernization))
+        {
+            throw new InvalidOperationException(
+                "The development engagements required by the calendar seed are missing.");
+        }
+
+        var today = DateTime.Today;
+
+        db.CalendarEntries.AddRange(
+            new CalendarEntry
+            {
+                Subject = "Accessibility review meeting",
+                StartTime = today.AddHours(9),
+                EndTime = today.AddHours(10),
+                Kind = CalendarEntryKind.Appointment,
+                ClientId = accessibilityReview.ClientId,
+                EngagementId = accessibilityReview.Id,
+                Assignee = "Alex Morgan"
+            },
+            new CalendarEntry
+            {
+                Subject = "Reporting workshop",
+                StartTime = today.AddDays(1).AddHours(14),
+                EndTime = today.AddDays(1).AddHours(15.5),
+                Kind = CalendarEntryKind.Appointment,
+                ClientId = reportingModernization.ClientId,
+                EngagementId = reportingModernization.Id,
+                Assignee = "Jordan Lee"
+            },
+            new CalendarEntry
+            {
+                Subject = "Send accessibility findings",
+                StartTime = today.AddDays(2),
+                EndTime = today.AddDays(3),
+                IsAllDay = true,
+                Kind = CalendarEntryKind.Deadline,
+                EngagementId = accessibilityReview.Id,
+                Assignee = "Alex Morgan"
             });
 
         await db.SaveChangesAsync();
