@@ -1,8 +1,240 @@
 @page "/"
+@inject DashboardService DashboardService
+@inject ILogger<Home> Logger
 
 <PageTitle>Dashboard - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Dashboard"
-            Subtitle="Operational overview and upcoming work." />
+            Subtitle="Operational priorities, workload, and upcoming deadlines.">
+    <Actions>
+        <SfButton IsPrimary="true"
+                  Disabled="@IsLoading"
+                  OnClick="RefreshAsync">
+            @(IsLoading ? "Refreshing..." : "Refresh")
+        </SfButton>
+    </Actions>
+</PageHeader>
 
-<p>Dashboard insights will be implemented in a later chapter.</p>
+@if (LastRefreshedAt is DateTime lastRefreshedAt)
+{
+    <p class="dashboard-refresh-note" role="status">
+        Last refreshed at @lastRefreshedAt.ToString("HH:mm:ss").
+    </p>
+}
+
+@if (IsLoading && Snapshot is null)
+{
+    <div class="dashboard-state" role="status">
+        Loading dashboard...
+    </div>
+}
+else if (!string.IsNullOrWhiteSpace(ErrorMessage))
+{
+    <div class="dashboard-error" role="alert">
+        <strong>Unable to load dashboard</strong>
+        <span>@ErrorMessage</span>
+        <SfButton CssClass="e-flat"
+                  OnClick="RefreshAsync">
+            Try again
+        </SfButton>
+    </div>
+}
+else if (Snapshot is not null)
+{
+    <section class="kpi-grid"
+             aria-label="Primary dashboard indicators">
+        <article class="kpi-card">
+            <span class="kpi-label">Engagements with open work</span>
+            <strong class="kpi-value">
+                @Snapshot.EngagementsWithOpenActivities
+            </strong>
+            <span class="kpi-note">
+                At least one activity is not completed
+            </span>
+        </article>
+
+        <article class="kpi-card">
+            <span class="kpi-label">Open activities</span>
+            <strong class="kpi-value">
+                @Snapshot.OpenActivities
+            </strong>
+            <span class="kpi-note">
+                Activities not yet completed
+            </span>
+        </article>
+
+        <article class="kpi-card">
+            <span class="kpi-label">Overdue activities</span>
+            <strong class="kpi-value">
+                @Snapshot.OverdueActivities
+            </strong>
+            <span class="kpi-note">
+                Open activities due before today
+            </span>
+        </article>
+
+        <article class="kpi-card">
+            <span class="kpi-label">Deadlines in 7 days</span>
+            <strong class="kpi-value">
+                @Snapshot.DeadlinesNextSevenDays
+            </strong>
+            <span class="kpi-note">
+                Upcoming calendar deadlines
+            </span>
+        </article>
+
+        <article class="kpi-card">
+            <span class="kpi-label">Recent documents</span>
+            <strong class="kpi-value">
+                @Snapshot.DocumentsLastThirtyDays
+            </strong>
+            <span class="kpi-note">
+                Active documents uploaded in the last 30 days
+            </span>
+        </article>
+    </section>
+
+    <div class="dashboard-grid"
+         style="grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));">
+        <section class="chart-panel"
+                 aria-labelledby="status-chart-heading">
+            <h2 id="status-chart-heading">Activities by status</h2>
+            <p>
+                Current distribution across the workflow.
+            </p>
+
+            <SfChart Height="330px">
+                <ChartPrimaryXAxis
+                    ValueType="Syncfusion.Blazor.Charts.ValueType.Category" />
+                <ChartPrimaryYAxis Minimum="0" />
+                <ChartTooltipSettings Enable="true" />
+                <ChartSeriesCollection>
+                    <ChartSeries
+                        DataSource="@Snapshot.ActivitiesByStatus"
+                        XName="@nameof(StatusCount.Status)"
+                        YName="@nameof(StatusCount.Count)"
+                        Type="ChartSeriesType.Column"
+                        Name="Activities">
+                        <ChartMarker>
+                            <ChartDataLabel Visible="true" />
+                        </ChartMarker>
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </section>
+
+        <section class="chart-panel"
+                 aria-labelledby="deadline-chart-heading">
+            <h2 id="deadline-chart-heading">Deadlines over 14 days</h2>
+            <p>
+                Calendar deadlines scheduled from today forward.
+            </p>
+
+            <SfChart Height="330px">
+                <ChartPrimaryXAxis
+                    ValueType="Syncfusion.Blazor.Charts.ValueType.DateTime"
+                    LabelFormat="MMM dd" />
+                <ChartPrimaryYAxis Minimum="0" />
+                <ChartTooltipSettings Enable="true" />
+                <ChartSeriesCollection>
+                    <ChartSeries
+                        DataSource="@Snapshot.DeadlinesByDay"
+                        XName="@nameof(DeadlineTrendPoint.Day)"
+                        YName="@nameof(DeadlineTrendPoint.Count)"
+                        Type="ChartSeriesType.Line"
+                        Name="Deadlines">
+                        <ChartMarker Visible="true" />
+                    </ChartSeries>
+                </ChartSeriesCollection>
+            </SfChart>
+        </section>
+
+        <section class="chart-panel chart-panel-wide"
+                 style="grid-column: 1 / -1;"
+                 aria-labelledby="assignee-chart-heading">
+            <h2 id="assignee-chart-heading">
+                Open activities by assignee
+            </h2>
+            <p>
+                Activity count is a workload signal, not a measure of effort.
+            </p>
+
+            @if (Snapshot.ActivitiesByAssignee.Count == 0)
+            {
+                <div class="dashboard-state" role="status">
+                    No open activities are currently assigned.
+                </div>
+            }
+            else
+            {
+                <div class="assignee-chart">
+                    <SfAccumulationChart Height="360px">
+                        <AccumulationChartLegendSettings
+                            Visible="true" />
+                        <AccumulationChartTooltipSettings
+                            Enable="true" />
+                        <AccumulationChartSeriesCollection>
+                            <AccumulationChartSeries
+                                DataSource="@Snapshot.ActivitiesByAssignee"
+                                XName="@nameof(AssigneeLoadPoint.Assignee)"
+                                YName="@nameof(AssigneeLoadPoint.Count)"
+                                Type="AccumulationType.Pie"
+                                InnerRadius="55%">
+                                <AccumulationDataLabelSettings
+                                    Visible="true"
+                                    Name="@nameof(AssigneeLoadPoint.Assignee)" />
+                            </AccumulationChartSeries>
+                        </AccumulationChartSeriesCollection>
+                    </SfAccumulationChart>
+                </div>
+            }
+        </section>
+    </div>
+}
+
+@code {
+    private DashboardSnapshot? Snapshot { get; set; }
+    private bool IsLoading { get; set; }
+    private string? ErrorMessage { get; set; }
+    private DateTime? LastRefreshedAt { get; set; }
+
+    protected override Task OnInitializedAsync() =>
+        LoadDashboardAsync();
+
+    private Task RefreshAsync() =>
+        LoadDashboardAsync();
+
+    private async Task LoadDashboardAsync()
+    {
+        if (IsLoading)
+        {
+            return;
+        }
+
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = null;
+
+            Snapshot = await DashboardService.LoadAsync(
+                DateTime.Now,
+                DateTime.UtcNow);
+
+            LastRefreshedAt = DateTime.Now;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to load dashboard snapshot.");
+
+            Snapshot = null;
+            ErrorMessage =
+                "The operational indicators could not be refreshed.";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+}

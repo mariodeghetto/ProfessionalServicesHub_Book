@@ -102,7 +102,8 @@ dotnet ef database update --project ProfessionalServicesHub/ProfessionalServices
 The current migrations create the client model, the Chapter 6
 `Engagements` and `WorkActivities` tables, the Chapter 7
 `CalendarEntries` table, and the Chapter 8 `Documents` table with its
-business relationships and indexes.
+business relationships and indexes. Chapter 9 adds no schema changes or new
+migration; the dashboard reads and aggregates the existing operational data.
 
 The Development seed is intentionally separate from schema migration. It runs
 when the application starts, inserts deterministic sample clients only when
@@ -121,7 +122,7 @@ dotnet run --launch-profile https --project ProfessionalServicesHub/Professional
 
 Open the HTTPS URL displayed by ASP.NET Core.
 
-At the Chapter 8 milestone, verify that:
+At the Chapter 9 milestone, verify that:
 
 - the Chapter 5 client grid and client editor behaviors remain operational
 - the Chapter 6 Kanban workflow remains operational and persisted
@@ -150,6 +151,14 @@ At the Chapter 8 milestone, verify that:
 - a non-allowed extension such as `.txt` is rejected before persistence
 - a renamed non-PDF file with a `.pdf` extension is rejected by server-side content validation
 - upload errors are displayed in the prominent status banner at the top of the page
+- `/` displays the operational dashboard instead of the earlier placeholder
+- five KPI cards show engagements with open work, open activities, overdue activities, deadlines in seven days, and recent documents
+- the activities-by-status chart displays all four workflow states, including zero-count states
+- the fourteen-day deadline trend includes every day in the period, including days with zero deadlines
+- the open-activities-by-assignee accumulation chart includes unassigned work when present
+- dashboard refresh updates the snapshot and the visible `Last refreshed at` timestamp
+- the dashboard charts remain readable when the browser width is reduced and collapse to a single column before becoming cramped
+- no Syncfusion Charts, Blazor, or EF Core runtime error appears while loading or refreshing the dashboard
 
 If the local HTTPS development certificate is not trusted, run:
 
