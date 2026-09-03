@@ -195,7 +195,7 @@ public sealed class DocumentService(
                 Sha256 = sha256,
                 Category = category,
                 Description = normalizedDescription,
-                UploadedAtUtc = DateTimeOffset.UtcNow,
+                UploadedAtUtc = DateTime.UtcNow,
                 ClientId = clientId,
                 EngagementId = engagementId
             };
