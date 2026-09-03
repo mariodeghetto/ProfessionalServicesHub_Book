@@ -17,6 +17,7 @@
     <PackageReference Include="Syncfusion.Blazor.DropDowns" />
     <PackageReference Include="Syncfusion.Blazor.Grid" />
     <PackageReference Include="Syncfusion.Blazor.Inputs" />
+    <PackageReference Include="Syncfusion.Blazor.Kanban" />
     <PackageReference Include="Syncfusion.Blazor.Navigations" />
     <PackageReference Include="Syncfusion.Blazor.Themes" />
   </ItemGroup>

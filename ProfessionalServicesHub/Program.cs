@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Clients;
+using ProfessionalServicesHub.Application.Work;
 using ProfessionalServicesHub.Components;
 using ProfessionalServicesHub.Infrastructure.Data;
 using Syncfusion.Blazor;
@@ -31,6 +32,7 @@ builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<ClientQueryService>();
 builder.Services.AddScoped<ClientCommandService>();
+builder.Services.AddScoped<ActivityBoardService>();
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -44,6 +46,7 @@ if (app.Environment.IsDevelopment())
         .GetRequiredService<IDbContextFactory<ApplicationDbContext>>();
 
     await DevelopmentDataSeeder.SeedAsync(factory);
+    await DevelopmentDataSeeder.SeedWorkAsync(factory);
 }
 
 // Configure the HTTP request pipeline.

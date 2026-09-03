@@ -1,8 +1,220 @@
 @page "/tasks"
+@inject ActivityBoardService ActivityBoard
+@inject ILogger<Tasks> Logger
 
 <PageTitle>Tasks - Professional Services Hub</PageTitle>
 
 <PageHeader Title="Tasks"
-            Subtitle="Manage work items, priorities, assignments, and workflow." />
+            Subtitle="Status, priority, ownership, and workflow." />
 
-<p>Task and workflow management will be implemented in a later chapter.</p>
+@if (IsLoading)
+{
+    <p role="status">Loading tasks...</p>
+}
+else if (LoadFailed)
+{
+    <div class="board-message" role="alert">
+        Unable to load the task board. Please try again later.
+    </div>
+}
+else
+{
+    @if (!string.IsNullOrWhiteSpace(BoardMessage))
+    {
+        <div class="board-message" role="alert">@BoardMessage</div>
+    }
+
+    <SfKanban TValue="ActivityBoardItem"
+              KeyField="StatusKey"
+              DataSource="@Items">
+        <KanbanColumns>
+            <KanbanColumn HeaderText="Planned"
+                          KeyField="@(new List<string> { nameof(ActivityStatus.Planned) })" />
+            <KanbanColumn HeaderText="In progress"
+                          KeyField="@(new List<string> { nameof(ActivityStatus.InProgress) })" />
+            <KanbanColumn HeaderText="Waiting"
+                          KeyField="@(new List<string> { nameof(ActivityStatus.Waiting) })" />
+            <KanbanColumn HeaderText="Completed"
+                          KeyField="@(new List<string> { nameof(ActivityStatus.Completed) })" />
+        </KanbanColumns>
+
+        <KanbanCardSettings HeaderField="Id"
+                            ContentField="Description"
+                            ShowHeader="false">
+            <Template>
+                @{
+                    var item = (ActivityBoardItem)context;
+
+                    <div class="work-card @(item.IsOverdue ? "work-card-overdue" : null)">
+                        <div class="work-card-head">
+                            <strong>@item.Title</strong>
+                            <span class="priority-tag">@item.Priority</span>
+                        </div>
+
+                        <div class="work-card-context">@item.EngagementCode</div>
+
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <div class="work-card-description">
+                                @item.Description
+                            </div>
+                        }
+
+                        <div class="work-card-footer">
+                            <span>@item.Assignee</span>
+                            <span>
+                                @(item.DueDate?.ToString("MM/dd/yyyy") ?? "No due date")
+                            </span>
+                        </div>
+                    </div>
+                }
+            </Template>
+        </KanbanCardSettings>
+
+        <KanbanSortSettings SortBy="SortOrderBy.Index"
+                            Field="Rank" />
+
+        <KanbanSwimlaneSettings KeyField="Assignee"
+                                AllowDragAndDrop="false" />
+
+        <KanbanEvents TValue="ActivityBoardItem"
+                      DragStart="OnDragStart"
+                      DragStop="OnDragStop" />
+    </SfKanban>
+}
+
+@code {
+    private List<ActivityBoardItem> Items { get; set; } = [];
+
+    private bool IsLoading { get; set; }
+
+    private bool LoadFailed { get; set; }
+
+    private string? BoardMessage { get; set; }
+
+    private int? DraggedActivityId { get; set; }
+
+    private ActivityStatus? DragSourceStatus { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ReloadAsync();
+    }
+
+    private async Task ReloadAsync()
+    {
+        try
+        {
+            IsLoading = true;
+            LoadFailed = false;
+            Items = await ActivityBoard.GetBoardAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Unable to load the task board.");
+            LoadFailed = true;
+            Items = [];
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private void OnDragStart(
+        Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
+    {
+        var item = args.Data?.FirstOrDefault();
+
+        if (item is null ||
+            !Enum.TryParse<ActivityStatus>(
+                item.StatusKey,
+                out var source))
+        {
+            args.Cancel = true;
+            DraggedActivityId = null;
+            DragSourceStatus = null;
+            BoardMessage = "The requested move is not valid.";
+            return;
+        }
+
+        DraggedActivityId = item.Id;
+        DragSourceStatus = source;
+        BoardMessage = null;
+    }
+
+    private async Task OnDragStop(
+        Syncfusion.Blazor.Kanban.DragEventArgs<ActivityBoardItem> args)
+    {
+        var item = args.Data?.FirstOrDefault();
+
+        if (item is null ||
+            DraggedActivityId != item.Id ||
+            DragSourceStatus is not ActivityStatus source ||
+            !Enum.TryParse<ActivityStatus>(
+                item.StatusKey,
+                out var target))
+        {
+            args.Cancel = true;
+            DraggedActivityId = null;
+            DragSourceStatus = null;
+            BoardMessage = "The requested move is not valid.";
+            await ReloadAsync();
+            return;
+        }
+
+        DraggedActivityId = null;
+        DragSourceStatus = null;
+
+        if (source == target)
+        {
+            args.Cancel = true;
+            BoardMessage =
+                "Reordering within a column is not persisted yet.";
+            await ReloadAsync();
+            return;
+        }
+
+        try
+        {
+            var result = await ActivityBoard.MoveAsync(
+                item.Id,
+                source,
+                target);
+
+            if (result != WorkflowMoveResult.Success)
+            {
+                args.Cancel = true;
+                BoardMessage = result switch
+                {
+                    WorkflowMoveResult.InvalidTransition =>
+                        "The workflow does not allow this transition.",
+                    WorkflowMoveResult.StaleState =>
+                        "The task was changed by another operation. The board has been refreshed.",
+                    WorkflowMoveResult.NotFound =>
+                        "The task is no longer available.",
+                    _ => "Unable to update the task."
+                };
+            }
+            else
+            {
+                BoardMessage = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(
+                ex,
+                "Unable to move task {TaskId} from {SourceStatus} to {TargetStatus}.",
+                item.Id,
+                source,
+                target);
+
+            args.Cancel = true;
+            BoardMessage =
+                "Unable to update the task. Please try again later.";
+        }
+
+        await ReloadAsync();
+    }
+}
