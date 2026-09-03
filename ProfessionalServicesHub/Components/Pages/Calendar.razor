@@ -1,5 +1,5 @@
 @page "/calendar"
-@inject CalendarService Calendar
+@inject CalendarService CalendarOperations
 @inject ILogger<Calendar> Logger
 
 <PageTitle>Calendar - Professional Services Hub</PageTitle>
@@ -194,7 +194,7 @@
                 SelectedDate,
                 CurrentView);
 
-            Items = await Calendar.GetRangeAsync(
+            Items = await CalendarOperations.GetRangeAsync(
                 window.From,
                 window.To);
         }
@@ -219,7 +219,7 @@
             SelectedDate,
             CurrentView);
 
-        Items = await Calendar.GetRangeAsync(
+        Items = await CalendarOperations.GetRangeAsync(
             window.From,
             window.To);
     }
@@ -242,7 +242,7 @@
                 }
 
                 args.Cancel = true;
-                result = await Calendar.CreateAsync(item);
+                result = await CalendarOperations.CreateAsync(item);
             }
             else if (args.ActionType ==
                 Syncfusion.Blazor.Schedule.ActionType.EventChange)
@@ -255,7 +255,7 @@
                 }
 
                 args.Cancel = true;
-                result = await Calendar.UpdateAsync(item);
+                result = await CalendarOperations.UpdateAsync(item);
             }
             else if (args.ActionType ==
                 Syncfusion.Blazor.Schedule.ActionType.EventRemove)
@@ -268,7 +268,7 @@
                 }
 
                 args.Cancel = true;
-                result = await Calendar.DeleteAsync(item.Id);
+                result = await CalendarOperations.DeleteAsync(item.Id);
             }
 
             if (result is null)
