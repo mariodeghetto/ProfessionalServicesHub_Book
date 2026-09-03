@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Calendar;
@@ -15,23 +16,28 @@ using ProfessionalServicesHub.Components.Services;
 using ProfessionalServicesHub.Infrastructure.Data;
 using ProfessionalServicesHub.Infrastructure.Documents;
 using ProfessionalServicesHub.Infrastructure.Identity;
+using ProfessionalServicesHub.Infrastructure.Health;
 using Syncfusion.Blazor;
 using Syncfusion.Blazor.Popups;
 using Syncfusion.Licensing;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var syncfusionLicenseKey =
-    builder.Configuration["Syncfusion:LicenseKey"];
-
-if (string.IsNullOrWhiteSpace(syncfusionLicenseKey))
+if (!builder.Environment.IsEnvironment("Testing"))
 {
-    throw new InvalidOperationException(
-        "The Syncfusion license key is not configured. " +
-        "See SETUP.md for configuration instructions.");
-}
+    var syncfusionLicenseKey =
+        builder.Configuration["Syncfusion:LicenseKey"];
 
-SyncfusionLicenseProvider.RegisterLicense(syncfusionLicenseKey);
+    if (string.IsNullOrWhiteSpace(syncfusionLicenseKey))
+    {
+        throw new InvalidOperationException(
+            "The Syncfusion license key is not configured. " +
+            "See SETUP.md for configuration instructions.");
+    }
+
+    SyncfusionLicenseProvider.RegisterLicense(
+        syncfusionLicenseKey);
+}
 
 var connectionString = builder.Configuration
     .GetConnectionString("ProfessionalServicesHub")
@@ -45,6 +51,11 @@ builder.Services.AddSignalR(options =>
 
 builder.Services.AddMemoryCache();
 builder.Services.AddSyncfusionBlazor();
+
+builder.Services.AddHealthChecks()
+    .AddCheck<DatabaseHealthCheck>(
+        "database",
+        tags: ["ready"]);
 
 builder.Services.AddDbContextFactory<ApplicationDbContext>(options =>
     options.UseSqlite(connectionString));
@@ -148,6 +159,21 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 
+app.MapHealthChecks(
+    "/health/live",
+    new HealthCheckOptions
+    {
+        Predicate = _ => false
+    });
+
+app.MapHealthChecks(
+    "/health/ready",
+    new HealthCheckOptions
+    {
+        Predicate = check =>
+            check.Tags.Contains("ready")
+    });
+
 app.MapGet(
     "/documents/{documentId:int}/download",
     DownloadDocumentAsync)
@@ -181,4 +207,9 @@ static async Task<IResult> DownloadDocumentAsync(
     {
         return Results.NotFound();
     }
+}
+
+
+public partial class Program
+{
 }

@@ -1,0 +1,37 @@
+name: Release quality gate
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Run quality gate
+        shell: bash
+        run: bash scripts/quality-gate.sh
+
+      - name: Build migration bundle
+        shell: bash
+        run: bash scripts/build-migration-bundle.sh
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: professional-services-hub-release
+          path: |
+            artifacts/publish
+            artifacts/database/efbundle
+          if-no-files-found: error

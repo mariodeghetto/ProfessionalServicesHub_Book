@@ -165,6 +165,23 @@ created from `DemoIdentity:CollaboratorEmail` and
 `DemoIdentity:CollaboratorPassword`; the development seed assigns that user
 to `ENG-001` as a Collaborator when the engagement exists.
 
+Chapter 12 adds the first automated verification and deployment baseline. The
+solution now contains `ProfessionalServicesHub.Tests`, targeting .NET 10 and
+xUnit v3 through Microsoft Testing Platform. The current suite contains 26
+tests covering workflow rules, scoped data visibility, dashboard aggregation,
+document access, database health, migrations, and selected HTTP integration
+scenarios. SQLite in-memory databases are used where appropriate, while
+integration-test file databases disable connection pooling so cleanup is
+deterministic on Windows.
+
+The application exposes unauthenticated liveness and readiness probes at
+`/health/live` and `/health/ready`. Liveness verifies that the process is
+responsive; readiness includes the database health check. The Chapter 12
+release gate restores tools and packages, builds Release with warnings treated
+as errors, runs all automated tests, verifies formatting, verifies that the EF
+Core model has no pending migration changes, and publishes the application.
+PowerShell and Bash versions are provided under `scripts`.
+
 ## Local database
 
 The Book Edition uses SQLite as its default development database.
@@ -222,7 +239,60 @@ Chapter 10 adds `Syncfusion.Blazor.Notifications`,
 `Syncfusion.Blazor.Popups`, and `Syncfusion.Blazor.Spinner`; the existing
 DropDowns package is reused for `SfAutoComplete`. Chapter 11 adds
 `Microsoft.AspNetCore.Identity.EntityFrameworkCore` 10.0.11 and keeps Identity
-on the same `ApplicationDbContext` used by the business model.
+on the same `ApplicationDbContext` used by the business model. Chapter 12
+adds the .NET 10 test stack, including xUnit v3, Microsoft Testing Platform,
+ASP.NET Core MVC testing support, and TRX reporting.
+
+## Chapter 12 quality and deployment commands
+
+Run the complete local release gate from the repository root.
+
+Windows PowerShell:
+
+```text
+powershell -ExecutionPolicy Bypass -File .\scripts\quality-gate.ps1
+```
+
+Bash:
+
+```text
+bash scripts/quality-gate.sh
+```
+
+A successful gate produces:
+
+```text
+artifacts/test-results/
+artifacts/publish/
+```
+
+Build an EF Core migration bundle separately when a release requires schema
+deployment:
+
+```text
+powershell -ExecutionPolicy Bypass -File .\scripts\build-migration-bundle.ps1
+```
+
+or:
+
+```text
+bash scripts/build-migration-bundle.sh
+```
+
+The Windows bundle is written to:
+
+```text
+artifacts/database/efbundle.exe
+```
+
+The bundle must be deployed with the configuration required to resolve the
+target connection string. Secrets and production connection strings must
+remain outside source control.
+
+The repository also contains
+`.github/workflows/release-quality-gate.yml`. It can be started manually or
+by pushing a `v*` tag and runs the same quality gate before creating release
+artifacts.
 
 ## License
 
