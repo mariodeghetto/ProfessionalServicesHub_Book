@@ -96,9 +96,9 @@ Planned, In progress, Waiting, and Completed workflow states. Engagements
 provide the work context for activities, swimlanes group cards by assignee,
 and workflow transitions are validated by the application layer before an
 atomic state update is persisted. Reordering within one column is intentionally
-not persisted yet. The Engagements page remains a placeholder for the later
-engagement-management chapter, although engagement data is already part of the
-domain and task workflow.
+not persisted yet. The Engagements page remains informational in these
+milestones. Full engagement editing is intentionally outside the Book Edition;
+Chapter 11 later adds scoped read-only engagement browsing.
 
 ## Local database
 
