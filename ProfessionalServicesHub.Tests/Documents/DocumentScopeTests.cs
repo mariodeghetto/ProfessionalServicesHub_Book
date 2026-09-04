@@ -106,9 +106,10 @@ public sealed class DocumentScopeTests
             "application/pdf",
             content.Length,
             engagementId: null,
-            DocumentCategory.Report,
+            category: DocumentCategory.Report,
             description: null,
-            TestContext.Current.CancellationToken);
+            cancellationToken:
+                TestContext.Current.CancellationToken);
 
         await using var db =
             await database.Factory.CreateDbContextAsync(

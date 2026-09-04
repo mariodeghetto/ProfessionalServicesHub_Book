@@ -323,7 +323,7 @@ and publish artifacts before execution. A failed test or build therefore
 prevents a later publish from being mistaken for an approved release.
 
 The current Chapter 12 suite contains 30 tests and has been validated with all
-26 passing.
+30 passing.
 
 ## 12. Health endpoints
 
