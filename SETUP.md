@@ -162,7 +162,7 @@ At the Chapter 12 milestone, verify that:
 - resizing an appointment persists the new end time
 - editing through the Scheduler editor persists the same validated data
 - deleting a calendar entry removes it permanently after refresh
-- overlapping timed appointments for the same assignee are rejected by the application service
+- overlapping timed appointments for the same descriptive assignee are rejected within the current user's visible data scope; this is not a global resource-reservation guarantee
 - invalid intervals with EndTime less than or equal to StartTime are rejected
 - no Syncfusion asset, license, Blazor, EF Core, Kanban, Scheduler, Uploader, DataGrid, or PDF Viewer runtime error appears in the browser console or application log
 - `/documents` opens and the document repository loads
