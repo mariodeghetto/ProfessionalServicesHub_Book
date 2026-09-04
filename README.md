@@ -170,7 +170,8 @@ solution now contains `ProfessionalServicesHub.Tests`, targeting .NET 10 and
 xUnit v3 through Microsoft Testing Platform. The current suite contains 30
 tests covering workflow rules, scoped data visibility, dashboard aggregation,
 document access and provenance, redirect safety, encoded notification content,
-database health, migrations, and selected HTTP integration scenarios. SQLite in-memory databases are used where appropriate, while
+database health, migrations, and selected HTTP integration scenarios. SQLite
+in-memory databases are used where appropriate, while
 integration-test file databases disable connection pooling so cleanup is
 deterministic on Windows.
 

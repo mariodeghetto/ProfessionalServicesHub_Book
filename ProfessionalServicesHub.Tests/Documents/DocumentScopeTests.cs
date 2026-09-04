@@ -1,8 +1,8 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Documents;
-using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Application.Security;
+using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Tests.Infrastructure;
 using ProfessionalServicesHub.Tests.Security;
 
