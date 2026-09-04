@@ -282,7 +282,7 @@
                 args.Cancel = true;
 
                 var confirmed = await DialogService.ConfirmAsync(
-                    $"The calendar entry '{item.Subject}' will be permanently deleted.",
+                    "This calendar entry will be permanently deleted.",
                     "Delete calendar entry?");
 
                 if (!confirmed)
