@@ -44,6 +44,39 @@ public sealed class EndpointIntegrationTests
     }
 
     [Fact]
+    public async Task Access_denied_page_is_available_without_redirect_loop()
+    {
+        var factory =
+            new TestWebApplicationFactory();
+
+        try
+        {
+            using (factory)
+            {
+                using var client =
+                    factory.CreateClient(
+                        new WebApplicationFactoryClientOptions
+                        {
+                            AllowAutoRedirect = false
+                        });
+
+                var response =
+                    await client.GetAsync(
+                        "/account/access-denied",
+                        TestContext.Current.CancellationToken);
+
+                Assert.Equal(
+                    HttpStatusCode.OK,
+                    response.StatusCode);
+            }
+        }
+        finally
+        {
+            factory.DeleteDatabase();
+        }
+    }
+
+    [Fact]
     public async Task Anonymous_document_download_is_challenged()
     {
         var factory =
