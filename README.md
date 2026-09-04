@@ -99,9 +99,9 @@ Planned, In progress, Waiting, and Completed workflow states. Engagements
 provide the work context for activities, swimlanes group cards by assignee,
 and workflow transitions are validated by the application layer before an
 atomic state update is persisted. Reordering within one column is intentionally
-not persisted yet. The Engagements page remains a placeholder for the later
-engagement-management chapter, although engagement data is already part of the
-domain and task workflow.
+not persisted yet. The Engagements page provides a scoped read-only list of
+professional engagements. Full engagement editing is intentionally outside the
+Book Edition.
 
 The Calendar page uses Syncfusion Scheduler with Day, Week, WorkWeek, Month,
 and Agenda views. Calendar entries are loaded by time range and persisted
