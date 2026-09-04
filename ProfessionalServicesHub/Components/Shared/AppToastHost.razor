@@ -38,7 +38,8 @@
             new ToastModel
             {
                 Title = notification.Title,
-                Content = notification.Message,
+                Content = UiNotificationContentEncoder.Encode(
+                    notification.Message),
                 Timeout = notification.Timeout,
                 CssClass = cssClass,
                 ShowCloseButton = true,

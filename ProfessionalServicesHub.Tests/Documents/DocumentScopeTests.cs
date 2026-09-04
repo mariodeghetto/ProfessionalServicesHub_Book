@@ -1,5 +1,7 @@
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
 using ProfessionalServicesHub.Application.Documents;
+using ProfessionalServicesHub.Domain.Documents;
 using ProfessionalServicesHub.Application.Security;
 using ProfessionalServicesHub.Tests.Infrastructure;
 using ProfessionalServicesHub.Tests.Security;
@@ -79,6 +81,47 @@ public sealed class DocumentScopeTests
         Assert.Equal(
             1,
             storage.OpenReadCalls);
+    }
+
+    [Fact]
+    public async Task Upload_records_current_user_as_uploader()
+    {
+        await using var database =
+            await TestDatabase.CreateAsync();
+
+        var storage = new TrackingDocumentStorage();
+
+        var service = new DocumentService(
+            database.Factory,
+            storage,
+            new TestCurrentUserAccessor(
+                TestUsers.Administrator()));
+
+        await using var content =
+            new MemoryStream("%PDF-1.7"u8.ToArray());
+
+        var documentId = await service.UploadAsync(
+            content,
+            "review.pdf",
+            "application/pdf",
+            content.Length,
+            engagementId: null,
+            DocumentCategory.Report,
+            description: null,
+            TestContext.Current.CancellationToken);
+
+        await using var db =
+            await database.Factory.CreateDbContextAsync(
+                TestContext.Current.CancellationToken);
+
+        var uploadedBy = await db.Documents
+            .Where(document => document.Id == documentId)
+            .Select(document => document.UploadedBy)
+            .SingleAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(
+            "Test Administrator",
+            uploadedBy);
     }
 
     private static ClaimsPrincipal CreateCollaboratorPrincipal(
