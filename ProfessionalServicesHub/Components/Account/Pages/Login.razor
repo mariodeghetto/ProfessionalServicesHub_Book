@@ -100,23 +100,11 @@
             return;
         }
 
-        var target = GetSafeReturnUrl(ReturnUrl);
+        var target = ReturnUrlPolicy.GetSafeLocalUrl(ReturnUrl);
 
         Navigation.NavigateTo(
             target,
             forceLoad: true);
-    }
-
-    private static string GetSafeReturnUrl(string? returnUrl)
-    {
-        if (string.IsNullOrWhiteSpace(returnUrl) ||
-            !returnUrl.StartsWith("/", StringComparison.Ordinal) ||
-            returnUrl.StartsWith("//", StringComparison.Ordinal))
-        {
-            return "/";
-        }
-
-        return returnUrl;
     }
 
     private sealed class LoginInput

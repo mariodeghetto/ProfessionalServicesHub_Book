@@ -37,8 +37,10 @@
         await Toast.ShowAsync(
             new ToastModel
             {
-                Title = notification.Title,
-                Content = notification.Message,
+                Title = UiNotificationContentEncoder.Encode(
+                    notification.Title),
+                Content = UiNotificationContentEncoder.Encode(
+                    notification.Message),
                 Timeout = notification.Timeout,
                 CssClass = cssClass,
                 ShowCloseButton = true,
