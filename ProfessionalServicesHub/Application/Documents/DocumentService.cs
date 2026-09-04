@@ -249,6 +249,7 @@ public sealed class DocumentService(
                 Category = category,
                 Description = normalizedDescription,
                 UploadedAtUtc = DateTime.UtcNow,
+                UploadedBy = CreateUploaderLabel(user),
                 ClientId = clientId,
                 EngagementId = engagementId
             };
@@ -400,6 +401,17 @@ public sealed class DocumentService(
                 cancellationToken);
 
         return affected == 1;
+    }
+
+    private static string CreateUploaderLabel(CurrentUser user)
+    {
+        var value = string.IsNullOrWhiteSpace(user.Name)
+            ? user.Id
+            : user.Name.Trim();
+
+        return value.Length <= 120
+            ? value
+            : value[..120];
     }
 
     private static string ResolveContentType(

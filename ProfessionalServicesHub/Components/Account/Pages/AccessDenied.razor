@@ -1,0 +1,15 @@
+@page "/account/access-denied"
+@attribute [AllowAnonymous]
+@layout AccountLayout
+@using Microsoft.AspNetCore.Authorization
+
+<PageTitle>Access denied - Professional Services Hub</PageTitle>
+
+<h1 class="h3">Access denied</h1>
+<p class="text-secondary">
+    Your account does not have permission to access the requested resource.
+</p>
+
+<a class="btn btn-primary" href="/">
+    Return to dashboard
+</a>
