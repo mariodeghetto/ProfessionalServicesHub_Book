@@ -32,6 +32,39 @@ clear logical boundaries between responsibilities:
 The structure intentionally remains lightweight. The Book Edition does not
 split these responsibilities into separate assemblies.
 
+## Chapter milestones
+
+The repository mirrors the book's incremental progression. Chapter 1 is
+architectural and introduces no application code, so it has no dedicated code
+branch. From Chapter 2 onward, each implemented chapter has its own milestone
+branch:
+
+- `chapter-02-bootstrap`
+- `chapter-03-application-shell`
+- `chapter-04-client-data-grid`
+- `chapter-05-client-forms`
+- `chapter-06-tasks-workflow`
+- `chapter-07-appointments-scheduler`
+- `chapter-08-document-management`
+- `chapter-09-dashboard-insights`
+- `chapter-10-user-experience-productivity`
+- `chapter-11-authentication-authorization-data-scope`
+- `chapter-12-testing-performance-deployment`
+- `chapter-13-extending-the-application`
+
+The `main` branch contains the complete Book Edition after the full review and
+hardening pass. The final published milestone history also includes a small set
+of review-hardening corrections applied to Chapters 3 through 6: the persistent
+Sidebar backdrop was removed, the main layout target received viewport-aware
+minimum height through Chapter 6, and early Engagement placeholder wording was
+corrected so it does not promise fields or CRUD capabilities that the Book
+Edition never implements. These changes do not backport later business
+features; they are considered part of the final reviewed chapter milestones.
+
+Readers can therefore move through the branches in chapter order and observe
+the application evolve alongside the text, then compare the result with
+`main`, which is the complete, buildable, tested companion application.
+
 ## Prerequisites
 
 - .NET 10 SDK
@@ -106,10 +139,13 @@ Book Edition.
 The Calendar page uses Syncfusion Scheduler with Day, Week, WorkWeek, Month,
 and Agenda views. Calendar entries are loaded by time range and persisted
 through an application service rather than directly by the component. The
-sample distinguishes appointments from deadlines, supports drag and drop,
-resizing, creation, editing, and deletion, and rejects overlapping timed
-appointments for the same assignee. All-day deadlines use a compact two-line
-template so the subject and entry type remain readable in the all-day band.
+sample distinguishes appointments from deadlines and supports drag and drop,
+resizing, creation, editing, and deletion. In the secured final baseline,
+overlap checks for timed appointments with the same descriptive assignee are
+applied within the current user's visible data scope; this is intentionally not
+presented as a global resource-reservation guarantee. All-day deadlines use a
+compact two-line template so the subject and entry type remain readable in the
+all-day band.
 
 The Documents page combines Syncfusion File Upload, DataGrid, and PDF Viewer
 with an application service and a private storage abstraction. Document bytes
@@ -239,9 +275,12 @@ not seeded; Chapter 8 verification uses real local uploads.
 
 The client editor uses an edit model rather than binding directly to the EF
 Core entity. Immediate field rules are enforced through DataAnnotations and
-the custom business email validator. The email policy used by this sample
-requires an Internet-style public domain, so addresses such as
-`name@sub.example.com` are accepted while `name@example` is rejected.
+the custom business email validator. The sample's email policy accepts
+Internet-style, DNS-like domains with at least two labels and a final label of
+at least two characters, so addresses such as `name@sub.example.com` are
+accepted while `name@example` is rejected. This validator does not perform
+DNS lookup, public-suffix validation, domain-registration checks, or mailbox
+verification.
 
 Client-code uniqueness is enforced by both the application service and the
 database unique index.
