@@ -214,7 +214,7 @@ At the Chapter 12 milestone, verify that:
 - `/health/live` returns HTTP 200 while the application process is healthy
 - `/health/ready` returns HTTP 200 when the application can connect to the configured database
 - an anonymous request to the protected document download endpoint is challenged by Identity
-- the automated Chapter 12 test suite completes with 26 of 26 tests passing
+- the automated Chapter 12 test suite completes with 30 of 30 tests passing
 
 If the local HTTPS development certificate is not trusted, run:
 
@@ -263,9 +263,10 @@ Infrastructure/Data/Migrations
 
 ## 9. Chapter 13 extension scope
 
-Chapter 13 introduces no additional setup requirements. It does not add
-packages, migrations, environment variables, secrets, services, background
-workers, external providers, or UI components to the Book Edition.
+Chapter 13 introduces no additional setup requirements or business
+capabilities. The later review-hardening pass adds no schema migration, package,
+secret, external provider, or environment requirement; it only tightens
+security, provenance, defensive UI handling, and automated verification.
 
 The Chapter 12 quality gate remains the authoritative verification path for the
 final companion application. After any documentation-only Chapter 13 change,
@@ -321,8 +322,8 @@ it remains fail-fast under Windows PowerShell 5.1. It also removes stale test
 and publish artifacts before execution. A failed test or build therefore
 prevents a later publish from being mistaken for an approved release.
 
-The current Chapter 12 suite contains 26 tests and has been validated with all
-26 passing.
+The current Chapter 12 suite contains 30 tests and has been validated with all
+30 passing.
 
 ## 12. Health endpoints
 

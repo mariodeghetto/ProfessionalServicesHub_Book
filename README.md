@@ -99,9 +99,9 @@ Planned, In progress, Waiting, and Completed workflow states. Engagements
 provide the work context for activities, swimlanes group cards by assignee,
 and workflow transitions are validated by the application layer before an
 atomic state update is persisted. Reordering within one column is intentionally
-not persisted yet. The Engagements page remains a placeholder for the later
-engagement-management chapter, although engagement data is already part of the
-domain and task workflow.
+not persisted yet. The Engagements page provides a scoped read-only list of
+professional engagements. Full engagement editing is intentionally outside the
+Book Edition.
 
 The Calendar page uses Syncfusion Scheduler with Day, Week, WorkWeek, Month,
 and Agenda views. Calendar entries are loaded by time range and persisted
@@ -167,10 +167,11 @@ to `ENG-001` as a Collaborator when the engagement exists.
 
 Chapter 12 adds the first automated verification and deployment baseline. The
 solution now contains `ProfessionalServicesHub.Tests`, targeting .NET 10 and
-xUnit v3 through Microsoft Testing Platform. The current suite contains 26
+xUnit v3 through Microsoft Testing Platform. The current suite contains 30
 tests covering workflow rules, scoped data visibility, dashboard aggregation,
-document access, database health, migrations, and selected HTTP integration
-scenarios. SQLite in-memory databases are used where appropriate, while
+document access and provenance, redirect safety, encoded notification content,
+database health, migrations, and selected HTTP integration scenarios. SQLite
+in-memory databases are used where appropriate, while
 integration-test file databases disable connection pooling so cleanup is
 deterministic on Windows.
 
@@ -184,9 +185,10 @@ PowerShell and Bash versions are provided under `scripts`.
 
 ## Chapter 13 extension roadmap
 
-Chapter 13 intentionally makes no runtime, schema, package, or configuration
-changes to the Book Edition. The verified Chapter 12 application is the final
-functional baseline of the companion repository.
+Chapter 13 intentionally adds no business capability, schema, package, or
+configuration changes to the Book Edition. A subsequent review-hardening pass
+may tighten security, provenance, tests, or defensive behavior without changing
+the chapter's extension scope or adding new business features.
 
 The chapter discusses possible future evolution paths such as feature-oriented
 modularity, application events, richer workflows, operational inboxes,
